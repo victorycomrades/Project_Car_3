@@ -719,3 +719,141 @@ RADIUS_GATE_PIXELS = 16      # 半径离上一帧中位半径多远以内才优�
 - 物料抓取时只识别当前目标颜色。
 - 放置阶段才打开色环识别。
 - MaixCam 输出 `QR`、`BLOB`、`RING`、`LINE` 结果给 Jetson，Jetson 决定下一步动作。
+
+## 10. 项目目录结构与硬件通信梳理
+
+### 10.1 目录总览
+
+```text
+Project/
+├── 8KTM-ROS/          STM32F407VET6 底层固件（CubeMX + HAL）
+├── MaixCam/           MaixCam 视觉代码（MaixPy v4 / MaixVision）
+├── xrobot2_ws/        老师给的 ROS1 工作空间 v2（完整功能包集合）
+├── xrobot3_ws/        老师给的 ROS1 工作空间 v3（串口通信 + 底盘控制）
+├── xrobot4_ws/        Jetson Nano 上位机工作空间（我们的代码）
+├── README.md          项目说明（本文件）
+└── 智能+赛道命题与运行（正式版）.pdf
+```
+
+### 10.2 STM32 底层固件（8KTM-ROS/MDK）
+
+- **MCU**: STM32F407VET6
+- **开发环境**: STM32CubeMX + HAL 库，支持 RT-Thread OS 可选（`SYS_SUPPORT_OS`）
+
+**串口配置**:
+
+| 串口 | TX Pin | RX Pin | 波特率 | 备注 |
+|------|--------|--------|--------|------|
+| USART1 | PA9 | PA10 | 1,000,000 | 主通信口，`Uart_Send()`/`Uart_Read()` 默认绑定 |
+| USART2 | PD5 | PD6 | 115200 | |
+| USART3 | PB10 | PB11 | 115200 | DMA 循环接收 |
+| UART4 | PC10 | PC11 | 115200 | DMA 收发 |
+| UART5 | PC12 | PD2 | 19200 | 9 位数据位 + 奇校验，仅 TX |
+| USART6 | PC6 | PC7 | 115200 | |
+
+**其他外设**: CAN1、CAN2、SPI1、ADC1、TIM1/2/4/5/8（PWM/编码器）
+
+**当前状态**: `main.c` 初始化了所有外设，主循环 `while(1)` 为空，业务逻辑尚未编写。
+
+### 10.3 xrobot2_ws（老师 ROS 工作空间 v2）
+
+ROS1 工作空间，包结构：
+
+| 包 | 功能 |
+|----|------|
+| `xrobot_arm/` | 机械臂控制（Python，含 jetarm 子模块） |
+| `xrobot_cv/` | 计算机视觉 |
+| `xrobot_description/` | 机器人 URDF 描述文件 |
+| `xrobot_driver/` | 底盘电机驱动 |
+| `xrobot_msgs/` | 自定义 ROS 消息定义 |
+| `xrobot_navigation/` | 导航功能包 |
+| `xrobot_slam/` | SLAM 功能包 |
+| `xrobot_teleop/` | 遥控/遥操作 |
+| `xrobot_tools/` | 工具包 |
+| `third_packages/` | 第三方包（astra_camera、ydlidar、hector_slam、gmapping、joystick 等） |
+
+### 10.4 xrobot3_ws（老师 ROS 工作空间 v3）
+
+核心包与 v2 有所不同，重点是 **串口通信 + 底盘控制**：
+
+**`serial_comm/` — Jetson ↔ STM32 串口通信协议**：
+
+- 传感器数据帧（STM32 → Jetson）：帧头 `"SD"`，34 字节，含巡线传感器×4、超声波×4、陀螺仪×3、加速度×3、欧拉角×3，CRC16-IBM 校验
+- 控制指令帧（Jetson → STM32）：帧头 `"ZD"`，含 4 路电机速度 + 5 路关节角度 + 复位标志，CRC16-IBM 校验
+- 发布 topic：`/imu/data`、`/ultrasonic`、`/line_sensor`
+- 订阅 topic：`/robot_cmd`（类型 `serial_comm/RobotControl`）
+
+**`Robot_CTRL/` — 底盘控制节点**：
+
+- 麦克纳姆轮运动学解算
+- PID 控制（角速度闭环）
+- 手柄遥控支持
+- 三种控制模式：放松（RELAX）、停止（STOP）、正常（NORMAL）
+- 订阅：`/motor_states`、`/imu/data`、`/joy`
+- 发布：`/robot_cmd`
+
+**其他包**: `robot_bringup/`（启动文件）、`third_packages/`（传感器驱动，同 v2）
+
+### 10.5 MaixCam 视觉模块
+
+- **运行环境**: MaixPy v4，代码通过 MaixVision 在 Windows 上编写，实际在 MaixCam 设备上运行
+- **分辨率**: 优先使用 `320x240`，避免快帧缓冲内存不足
+
+**当前脚本清单**（`MaixCam/maixcam_tests/`）:
+
+| 脚本 | 功能 |
+|------|------|
+| `00_uart.py` | UART 基础收发测试（`/dev/ttyGS0` 或 `/dev/ttyS0`，115200） |
+| `01_qrcode_test.py` | 二维码识别，打印内容并画框 |
+| `02_color_blob_test.py` | 红绿蓝色块识别基础版 |
+| `02_color_blob_center_test.py` | 色块中心点输出版（cx/cy/dx/dy） |
+| `03_line_tracking_test.py` | 直线/巡线测试 |
+| `04_vision_mode_test.py` | 综合模式测试（修改变量切换 QR/BLOB_RED/GREEN/BLUE/ALL/LINE） |
+| `05_color_ring_test.py` | 基础色环中心识别（颜色阈值粗定位） |
+| `06_color_ring_multi_circle_test.py` | 多真实圆检测与圆心融合实验版 |
+
+**输出协议格式**:
+
+```text
+QR,123+231
+BLOB,RED,cx,cy,w,h,area,dx,dy
+RING,RED,cx,cy,dx,dy,radius,score,density,ratio,source
+LINE,dx,theta
+NONE,QR
+NONE,BLOB,RED
+```
+
+### 10.6 MaixCam 硬件串口引脚
+
+| UART | TX Pin | RX Pin | Linux 设备 | 说明 |
+|------|--------|--------|-----------|------|
+| **UART0** | A16 | A17 | `/dev/ttyS0` | 默认可用，开机输出 boot log；**A16 不能拉低否则无法开机** |
+| **UART1** | A19 | A18 | `/dev/ttyS1` | 需 `pinmap.set_pin_function()` 配置后才可用 |
+| UART2 | A28 | — | `/dev/ttyS2` | 与 JTAG_TDI 复用 |
+
+- **IO 电压 3.3V**，不能直连 5V
+- 接线：TX ↔ RX 交叉，GND ↔ GND
+- UART0 启动时会输出系统日志，与 MCU 通信时需要忽略开机阶段的数据
+- 如果 UART0 有问题，建议改用 UART1
+
+### 10.7 系统架构规划
+
+目标硬件拓扑：
+
+```text
+MaixCam --UART--> Jetson Nano / ROS --UART--> STM32F407 --电机/舵机/传感器
+```
+
+职责划分：
+
+- **MaixCam**: 前端视觉传感器，仅输出识别结果（QR/BLOB/RING/LINE）
+- **Jetson Nano**: 任务决策、状态机、路径规划、ROS 节点调度、数据融合
+- **STM32**: 底层实时控制（电机闭环、舵机动作、机械爪时序、编码器、安全保护）
+
+### 10.8 推荐实施方案
+
+1. 调通 MaixCam → Jetson Nano 的 **UART 串口** 通信（当前目标）
+2. Jetson 上写 ROS 节点读取串口，发布为 ROS topic
+3. 调通 Jetson Nano → STM32 的串口通信（可复用 xrobot3_ws 的 `serial_comm` 包）
+4. Jetson 上写 `task_manager_node`，把视觉结果和 STM32 动作串成完整状态机
+5. 最后做全流程联调
