@@ -1,0 +1,16 @@
+global_costmap:
+  # The "global_frame" parameter defines what coordinate frame the costmap should run in, in this case, we'll choose the /map frame.
+  global_frame: map
+  # 机器人的基坐标系
+  robot_base_frame: base_footprint
+
+  # 代价地图更新的频率（以Hz为单位）,数值越大CPU负担越重，通常设定在1.0到5.0之间。
+  update_frequency: 10.0
+  # 代价地图发布可视化信息的速率（以Hz为单位）。
+  publish_frequency: 10.0
+  # 如果为true，则由map_server提供的地图服务来进行代价地图的初始化，否则为false。
+  transform_tolerance: 0.5
+
+  # 如果为true，则由map_server提供的地图服务来进行代价地图的初始化，否则为false。
+  static_map: true
+ 

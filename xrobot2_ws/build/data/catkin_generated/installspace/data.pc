@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot2_ws/install
+
+Name: data
+Description: Description of data
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

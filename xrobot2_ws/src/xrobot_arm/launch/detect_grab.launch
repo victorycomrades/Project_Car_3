@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="rviz" type="rviz" name="rviz" required="true" args="-d $(find xrobot_arm)/rviz/arm_02.rviz" />
+    <include file="$(find xrobot_driver)/launch/xrobot_astra_camera.launch"/>
+    <node pkg="xrobot_arm" type="detect_grab.py" name="object_detect" required="true" output="screen"/>
+</launch>

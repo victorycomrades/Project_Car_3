@@ -1,0 +1,15 @@
+<launch>
+  <arg name="host" default="10.131.167.1" />
+  <arg name="port" default="7000" />
+  <arg name="topic_prefix" default="/vision" />
+  <arg name="frame_id" default="maixcam" />
+
+  <node pkg="maixcam_bridge" type="maixcam_bridge_node.py" name="maixcam_bridge" output="screen" respawn="true">
+    <param name="host" value="$(arg host)" />
+    <param name="port" value="$(arg port)" />
+    <param name="topic_prefix" value="$(arg topic_prefix)" />
+    <param name="frame_id" value="$(arg frame_id)" />
+    <param name="reconnect_delay" value="1.0" />
+  </node>
+</launch>
+

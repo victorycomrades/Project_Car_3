@@ -1,0 +1,13 @@
+<launch>
+    <arg name="xrobot_name" default="robot4"/>
+    
+    <group ns="$(arg xrobot_name)">
+        <include file="$(find xrobot_driver)/launch/xrobot_bringup.launch">
+            <arg name="multi_robot_name" value="$(arg xrobot_name)"/>
+        </include>
+        <include file="$(find xrobot_driver)/launch/xrobot_remote.launch">
+            <arg name="multi_robot_name" value="$(arg xrobot_name)"/>
+        </include>
+    </group>
+    
+</launch>

@@ -1,0 +1,12 @@
+\subsubsection usage Usage
+\verbatim
+<node name="Params" pkg="xrobot_cv" type="Params">
+  <param name="Hmin" type="int" value="160" />
+  <param name="Smin" type="int" value="160" />
+  <param name="Vmin" type="int" value="230" />
+  <param name="Hmax" type="int" value="180" />
+  <param name="Smax" type="int" value="215" />
+  <param name="Vmax" type="int" value="245" />
+</node>
+\endverbatim
+

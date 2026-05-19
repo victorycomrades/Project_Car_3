@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <name>serial_comm</name>
+  <version>0.0.1</version>
+  <description>ROS 1 package for STM32F407 communication</description>
+  <maintainer email="user@example.com">User</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>libserial-dev</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>libserial</run_depend>
+
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend>
+
+</package>

@@ -1,0 +1,7 @@
+set(xrobot_teleop_SETUP_PY_SETUP_MODULE "distutils.core")
+set(xrobot_teleop_SETUP_PY_VERSION "0.0.0")
+set(xrobot_teleop_SETUP_PY_SCRIPTS "")
+set(xrobot_teleop_SETUP_PY_PACKAGES "xrobot_teleop")
+set(xrobot_teleop_SETUP_PY_PACKAGE_DIRS "src/xrobot_teleop")
+set(xrobot_teleop_SETUP_PY_MODULES "")
+set(xrobot_teleop_SETUP_PY_MODULE_DIRS "")

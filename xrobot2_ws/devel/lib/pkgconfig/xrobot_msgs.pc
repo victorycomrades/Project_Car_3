@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot2_ws/devel
+
+Name: xrobot_msgs
+Description: Description of xrobot_msgs
+Version: 0.0.1
+Cflags: -I/home/xrobot/xrobot2_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: std_msgs message_runtime

@@ -1,0 +1,9 @@
+<launch>
+
+  <node name="robot_ctrl_node" pkg="robot_ctrl" type="robot_ctrl_node" output="screen">
+
+    <param name="linear_scale" value="250.0" />
+    <param name="angular_scale" value="50.0" />
+    <param name="max_speed" value="250" />
+  </node>
+</launch>

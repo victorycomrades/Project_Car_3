@@ -1,0 +1,11 @@
+\subsubsection usage Usage
+\verbatim
+<node name="xrobot_driver" pkg="xrobot_chassis" type="xrobot_driver">
+  <param name="chassis_type" type="int" value="2" />
+  <param name="x_speed_scale" type="double" value="1.0" />
+  <param name="y_speed_scale" type="double" value="1.0" />
+  <param name="w_speed_scale" type="double" value="1.0" />
+  <param name="save_params" type="bool" value="False" />
+</node>
+\endverbatim
+

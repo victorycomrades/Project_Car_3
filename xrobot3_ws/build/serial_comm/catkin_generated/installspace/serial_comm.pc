@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot3_ws/install
+
+Name: serial_comm
+Description: Description of serial_comm
+Version: 0.0.1
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lserial_comm
+Requires: roscpp std_msgs sensor_msgs geometry_msgs tf message_runtime

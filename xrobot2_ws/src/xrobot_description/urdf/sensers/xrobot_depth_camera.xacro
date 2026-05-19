@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="camera">
+    <xacro:macro name="xrobot_depth_camera" params="parent_prefix:=base_link frame_prefix:=depth_camera *joint_pose">
+        <link name="${frame_prefix}_link">
+            <inertial>
+                <mass value="0.1" />
+                <origin xyz="0 0 0" />
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0"
+                         iyy="1e-6" iyz="0.0"
+                         izz="1e-6" />
+            </inertial>
+
+            <visual>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.015 0.08 0.015"/>
+                </geometry>
+                <material name="Yellow"/>
+            </visual>
+
+            <collision>
+                <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.02 0.06 0.015"/>
+                </geometry>
+            </collision>
+        </link>
+
+        <joint type="fixed" name="camera_joint">
+            <xacro:insert_block name="joint_pose"/>
+            <child link="${frame_prefix}_link"/>
+            <parent link="${parent_prefix}"/>
+        </joint>
+
+        <gazebo reference="${frame_prefix}_link">
+            <material>Gazebo/Yellow</material>
+            <sensor type="depth" name="depth_camera">
+                <pose>0 0 0 0 0 0</pose>
+                <always_on>true</always_on>
+                <visualize>true</visualize>
+                <update_rate>10.0</update_rate>
+                <camera name="head">
+                    <horizontal_fov>1.3962634</horizontal_fov>
+                    <image>
+                        <width>640</width>
+                        <height>480</height>
+                        <format>R8G8B8</format>
+                    </image>
+                    <clip>
+                        <near>0.02</near>
+                        <far>300</far>
+                    </clip>
+                </camera>
+                <plugin name="gazebo_depth_camera_sensor" filename="libgazebo_ros_openni_kinect.so">
+                    <baseline>0.2</baseline>
+                    <alwaysOn>true</alwaysOn>
+                    <!-- Keep this zero, update_rate in the parent <sensor> tag
+                        will control the frame rate. -->
+                    <updateRate>0.0</updateRate>
+                    <cameraName>${frame_prefix}</cameraName>
+                    <imageTopicName>/rgb/image_raw</imageTopicName>
+                    <cameraInfoTopicName>/rgb/camera_info</cameraInfoTopicName>
+                    <depthImageTopicName>/depth/image_raw</depthImageTopicName>
+                    <depthImageCameraInfoTopicName>/depth/camera_info</depthImageCameraInfoTopicName>
+                    <pointCloudTopicName>/depth/points</pointCloudTopicName>
+                    <frameName>${frame_prefix}_link</frameName>
+
+                    <pointCloudCutoff>0.5</pointCloudCutoff>
+                    <pointCloudCutoffMax>3.0</pointCloudCutoffMax>
+                    <distortionK1>0</distortionK1>
+                    <distortionK2>0</distortionK2>
+                    <distortionK3>0</distortionK3>
+                    <distortionT1>0</distortionT1>
+                    <distortionT2>0</distortionT2>
+                    <CxPrime>0</CxPrime>
+                    <Cx>0</Cx>
+                    <Cy>0</Cy>
+                    <focalLength>0</focalLength>
+                    <hackBaseline>0</hackBaseline>
+                </plugin>
+            </sensor>
+        </gazebo>
+
+    </xacro:macro>
+</robot>

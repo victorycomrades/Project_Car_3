@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot2_ws/install
+
+Name: xrobot_cv
+Description: Description of xrobot_cv
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: roscpp rospy geometry_msgs sensor_msgs dynamic_reconfigure

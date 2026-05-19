@@ -1,0 +1,10 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~chassis_type" : \b [int] Select Chassis Type min: 0, default: 2, max: 3
+- \b "~x_speed_scale" : \b [double] Speed coefficient when the joystick min: 0.01, default: 1.0, max: 5.0
+- \b "~y_speed_scale" : \b [double] Speed coefficient when the joystick min: 0.01, default: 1.0, max: 5.0
+- \b "~w_speed_scale" : \b [double] Speed coefficient when the joystick min: 0.01, default: 1.0, max: 5.0
+- \b "~save_params" : \b [bool] Publish Potential Costmap min: False, default: False, max: True
+

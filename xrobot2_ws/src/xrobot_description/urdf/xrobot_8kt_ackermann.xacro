@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot name="xrobot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:arg name="use_lidar" default="true" />
+    <xacro:arg name="use_camera" default="true" />
+    <xacro:arg name="use_imu" default="true" />
+
+    <xacro:include filename="$(find xrobot_description)/urdf/components/common_properties.xacro" />
+    <xacro:include filename="$(find xrobot_description)/urdf/chassises/xrobot_chassis_8kt_ackermann.xacro" />
+    <xacro:include filename="$(find xrobot_description)/urdf/sensers/xrobot_depth_camera.xacro" />
+    <xacro:include filename="$(find xrobot_description)/urdf/sensers/xrobot_imu.xacro" />
+    <xacro:include filename="$(find xrobot_description)/urdf/sensers/xrobot_lidar.xacro" />
+
+    <xacro:property name="lidar_offset_x" value="0.115" />
+    <xacro:property name="lidar_offset_y" value="0" />
+    <xacro:property name="lidar_offset_z" value="0.06" />
+
+    <xacro:property name="camera_offset_x" value="0.012" />
+    <xacro:property name="camera_offset_y" value="0" />
+    <xacro:property name="camera_offset_z" value="0.165" />
+
+    <xacro:property name="imu_offset_x" value="0.0" />
+    <xacro:property name="imu_offset_y" value="0" />
+    <xacro:property name="imu_offset_z" value="0.0" />
+
+    <xacro:xrobot_chassis frame_prefix="chassis" base_mass="4.0" 
+        base_x_size="0.0" base_y_size="0.0" base_z_size="0.0">
+    </xacro:xrobot_chassis>
+
+    <xacro:if value="$(arg use_lidar)">
+        <xacro:xrobot_lidar parent_prefix="base_link" frame_prefix="laser">
+        <origin xyz="${lidar_offset_x} ${lidar_offset_y} ${lidar_offset_z}" rpy="0 0 0"/>
+        </xacro:xrobot_lidar>
+    </xacro:if>
+    
+    <xacro:if value="$(arg use_camera)">
+        <xacro:xrobot_depth_camera parent_prefix="base_link" frame_prefix="camera">
+            <origin xyz="${camera_offset_x} ${camera_offset_y} ${camera_offset_z}" rpy="0 0 0"/>
+        </xacro:xrobot_depth_camera>
+    </xacro:if>
+
+    <xacro:if value="$(arg use_imu)">
+        <xacro:xrobot_imu parent_prefix="base_link" frame_prefix="imu">
+            <origin xyz="${imu_offset_x} ${imu_offset_y} ${imu_offset_z}" rpy="0 0 0"/>
+        </xacro:xrobot_imu>
+    </xacro:if>
+</robot>

@@ -1,0 +1,10 @@
+<launch>
+
+<include file = "$(find xrobot_driver)/launch/xrobot_bringup.launch" />
+
+<include file = "$(find xrobot_driver)/launch/xrobot_astra_camera.launch" />
+
+<include file = "$(find xrobot_teleop)/launch/keyboard.launch" />
+
+
+</launch>

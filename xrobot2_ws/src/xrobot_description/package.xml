@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>xrobot_description</name>
+  <version>0.0.0</version>
+  <description>3D models of the TurtleBot3 for simulation and visualization</description>
+
+  <maintainer email="xrobot@todo.todo">xrobot</maintainer>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>urdf</build_depend>
+  <build_depend>xacro</build_depend>
+  <build_export_depend>urdf</build_export_depend>
+  <build_export_depend>xacro</build_export_depend>
+  <exec_depend>urdf</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <export></export>
+</package>

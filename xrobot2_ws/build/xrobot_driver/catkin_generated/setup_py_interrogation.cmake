@@ -1,0 +1,7 @@
+set(xrobot_driver_SETUP_PY_SETUP_MODULE "distutils.core")
+set(xrobot_driver_SETUP_PY_VERSION "0.1.0")
+set(xrobot_driver_SETUP_PY_SCRIPTS "")
+set(xrobot_driver_SETUP_PY_PACKAGES "xrobot_driver")
+set(xrobot_driver_SETUP_PY_PACKAGE_DIRS "src/xrobot_driver")
+set(xrobot_driver_SETUP_PY_MODULES "")
+set(xrobot_driver_SETUP_PY_MODULE_DIRS "")

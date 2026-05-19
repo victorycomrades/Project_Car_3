@@ -1,0 +1,131 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="chassis">
+    <xacro:macro name="xrobot_chassis"
+        params="frame_prefix:=chassis wheelbase:=0.24 track:=0.24 base_mass base_x_size base_y_size base_z_size">
+        <xacro:property name="wheel_mass" value="0.02" />
+        <xacro:property name="wheel_radius" value="0.04" />
+        <xacro:property name="wheel_width" value="0.04" />
+
+        <xacro:include filename="$(find xrobot_description)/urdf/wheels/xrobot_wheel.xacro" />
+        <link name="base_footprint" />
+        <joint name="base_joint" type="fixed">
+            <parent link="base_footprint" />
+            <child link="base_link" />
+            <origin xyz="0.0 0.0 0.04" rpy="0 0 0" />
+        </joint>
+
+        <!-- Base link -->
+        <link name="base_link">
+            <visual>
+                <origin xyz="0.0 0.0 0.097" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <mesh filename="package://xrobot_description/meshes/bases/8kt.STL"
+                        scale="0.001 0.001 0.001" />
+                </geometry>
+                <material name="White" />
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="${base_x_size} ${base_y_size} ${base_z_size}" />
+                </geometry>
+            </collision>
+            <inertial>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <mass value="${base_mass}" />
+                <inertia ixx="0.1" ixy="0.0" ixz="0.0"
+                    iyy="0.1" iyz="0.0"
+                    izz="0.5" />
+            </inertial>
+        </link>
+
+        <link name="left_bridge_link">
+            <inertial>
+                <mass value="0.001"/>
+                <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+              </inertial>
+        </link>
+
+        <joint name="left_bridge_to_bridge" type="revolute">
+            <parent link="base_link" />
+            <child link="left_bridge_link" />
+            <origin xyz="${wheelbase/2} ${track/2} 0" rpy="0 0 0" />
+            <axis xyz="0 0 -1" />
+            <limit effort="2.5" velocity="10" lower="-0.785" upper="0.785" />
+        </joint>
+
+        <link name="right_bridge_link">
+            <inertial>
+                <mass value="0.001"/>
+                <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+              </inertial>
+            
+        </link>
+
+        <joint name="right_bridge_to_bridge" type="revolute">
+            <parent link="base_link" />
+            <child link="right_bridge_link" />
+            <origin xyz="${wheelbase/2} ${-track/2} 0" rpy="${M_PI} 0 0" />
+            <axis xyz="0 0 -1" />
+            <limit effort="2.5" velocity="10" lower="-0.785" upper="0.785" />
+            <mimic joint="left_bridge_to_bridge" multiplier="-1" offset="0" />
+        </joint>
+
+        <xacro:xrobot_wheel
+            parent_prefix="left_bridge_link" wheel_prefix="left_front" reflect="1"
+            wheel_width="${wheel_width}" wheel_radius="${wheel_radius}" wheel_mass="${wheel_mass}">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:xrobot_wheel>
+
+        <xacro:xrobot_wheel
+            parent_prefix="right_bridge_link" wheel_prefix="right_front" reflect="-1"
+            wheel_width="${wheel_width}" wheel_radius="${wheel_radius}" wheel_mass="${wheel_mass}">
+            <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:xrobot_wheel>
+
+        <xacro:xrobot_wheel
+            parent_prefix="base_link" wheel_prefix="left_back" reflect="1"
+            wheel_width="${wheel_width}" wheel_radius="${wheel_radius}" wheel_mass="${wheel_mass}">
+            <origin xyz="${-wheelbase/2} ${track/2} 0" rpy="0 0 0" />
+        </xacro:xrobot_wheel>
+
+        <xacro:xrobot_wheel
+            parent_prefix="base_link" wheel_prefix="right_back" reflect="-1"
+            wheel_width="${wheel_width}" wheel_radius="${wheel_radius}" wheel_mass="${wheel_mass}">
+            <origin xyz="${-wheelbase/2} ${-track/2} 0" rpy="${M_PI} 0 0" />
+        </xacro:xrobot_wheel>
+
+        <transmission name="right_bridge_joint_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="right_bridge_to_bridge" >
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="right_bridge_joint_motor">
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+                <motorTorqueConstant>100</motorTorqueConstant>
+            </actuator>
+        </transmission>	
+        <transmission name="left_bridge_joint_trans">
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="left_bridge_to_bridge" >
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            </joint>
+            <actuator name="left_bridge_joint_motor">
+                <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+                <motorTorqueConstant>100</motorTorqueConstant>
+            </actuator>
+        </transmission>
+        
+        
+        <gazebo>
+
+            <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+                <robotParam>robot_description</robotParam>
+                <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+                <legacyModeNS>true</legacyModeNS>
+            </plugin>
+        </gazebo>
+    </xacro:macro>
+</robot>

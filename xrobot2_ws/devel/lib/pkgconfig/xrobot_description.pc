@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot2_ws/devel
+
+Name: xrobot_description
+Description: Description of xrobot_description
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: urdf xacro

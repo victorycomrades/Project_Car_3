@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="wheel">
+
+    <xacro:property name="wheel_mass"   value="0.02" />
+    <xacro:property name="wheel_radius" value="0.04"/>
+    <xacro:property name="wheel_width" value="0.04"/>
+    
+    <!-- Transmission is important to link the joints and the controller -->
+    <xacro:include filename="$(find xrobot_description)/urdf/wheels/wheel_transmission.xacro" />
+
+    <!-- 右旋麦轮 -->
+    <xacro:macro name="mecanum_wheel_right" params="parent_prefix:=base_link wheel_prefix reflect *joint_pose">
+        <link name="${wheel_prefix}_wheel_link">
+            <inertial>
+                <origin xyz="0 0 0" />
+                <mass value="${wheel_mass}" />
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0"
+                         iyy="1e-6" iyz="0.0"
+                         izz="1e-6" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <mesh filename="package://xrobot_description/meshes/wheels/mecanum_wheel_80mm_right_s.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="Black"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <cylinder length="${wheel_width}" radius="${wheel_radius}" />
+                    <!-- <mesh filename="package://xrobot_description/meshes/wheels/mecanum_wheel_80mm_right.STL" scale="0.001 0.001 0.001"/> -->
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="${wheel_prefix}_wheel_joint" type="continuous">
+            <parent link="${parent_prefix}"/>
+            <child link="${wheel_prefix}_wheel_link"/>
+            <xacro:insert_block name="joint_pose"/>
+            <axis xyz="0 ${reflect*1} 0"/>
+        </joint>
+
+        <xacro:wheel_transmission prefix="${wheel_prefix}" />
+
+        <gazebo reference="${wheel_prefix}_wheel_link">
+            <material>Gazebo/Black</material>
+            <mu1>100000000</mu1>
+            <mu2>100000000</mu2>
+            <kp>10000000.0</kp>
+            <kd>1.0</kd>
+            <minDepth>0.01</minDepth>
+            <fdir1>1 0 0</fdir1>
+            <maxContacts value="64"/>
+        </gazebo>
+    </xacro:macro>
+
+    <!-- 左旋麦轮 -->
+    <xacro:macro name="mecanum_wheel_left" params="parent_prefix:=base_link wheel_prefix reflect *joint_pose">
+        <link name="${wheel_prefix}_wheel_link">
+            <inertial>
+                <origin xyz="0 0 0" />
+                <mass value="${wheel_mass}" />
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0"
+                         iyy="1e-6" iyz="0.0"
+                         izz="1e-6" />
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <mesh filename="package://xrobot_description/meshes/wheels/mecanum_wheel_80mm_left_s.stl" scale="0.001 0.001 0.001"/>
+                </geometry>
+                <material name="Black"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" />
+                <geometry>
+                    <cylinder length="${wheel_width}" radius="${wheel_radius}" />
+                    <!-- <mesh filename="package://xrobot_description/meshes/wheels/mecanum_wheel_80mm_left.STL" scale="0.001 0.001 0.001"/> -->
+                </geometry>
+            </collision>
+        </link>
+
+        <joint name="${wheel_prefix}_wheel_joint" type="continuous">
+            <parent link="${parent_prefix}"/>
+            <child link="${wheel_prefix}_wheel_link"/>
+            <xacro:insert_block name="joint_pose"/>
+            <axis xyz="0 ${reflect*1} 0"/>
+        </joint>
+
+        <xacro:wheel_transmission prefix="${wheel_prefix}" />
+
+        <gazebo reference="${wheel_prefix}_wheel_link">
+            <material>Gazebo/Black</material>
+            <mu1>100000000</mu1>
+            <mu2>100000000</mu2>
+            <kp>10000000.0</kp>
+            <kd>1.0</kd>
+            <minDepth>0.01</minDepth>
+            <fdir1>1 0 0</fdir1>
+            <maxContacts value="64"/>
+        </gazebo>
+    </xacro:macro>
+</robot>

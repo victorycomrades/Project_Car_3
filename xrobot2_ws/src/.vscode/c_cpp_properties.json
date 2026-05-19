@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/xrobot/xrobot2_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/astra_camera/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/hector_slam/hector_geotiff/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/hector_slam/hector_map_tools/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/hector_slam/hector_mapping/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/hector_slam/hector_marker_drawing/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/robot_pose_ekf/include/**",
+        "/home/xrobot/xrobot2_ws/src/third_packages/rosserial/rosserial_server/include/**",
+        "/home/xrobot/xrobot2_ws/src/xrobot_arm/include/**",
+        "/home/xrobot/xrobot2_ws/src/xrobot_cv/include/**",
+        "/home/xrobot/xrobot2_ws/src/xrobot_driver/include/**",
+        "/home/xrobot/xrobot2_ws/src/xrobot_slam/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-arm64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

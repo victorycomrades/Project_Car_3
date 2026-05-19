@@ -1,0 +1,24 @@
+<launch>
+    <arg name="robot_namespace" default="robot1"/>
+    <arg name="use_gui" default="true"/>
+    <arg name="model" default="$(find xrobot_description)/urdf/xrobot_8kt.xacro" />
+
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(arg model)' robot_namespace:=$(arg robot_namespace)" />
+
+    <!-- 运行joint_state_publisher节点，发布机器人的关节状态  -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"
+        if="$(arg use_gui)">
+        <param name="rate" value="20.0"/>
+    </node>
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"
+        unless="$(arg use_gui)">
+        <param name="rate" value="20.0"/>
+    </node>
+
+    <!-- 运行robot_state_publisher节点，发布tf  -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <!-- 运行rviz可视化界面 -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find xrobot_description)/rviz/display.rviz" required="true" />
+
+</launch>

@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="rviz" type="rviz" name="rviz" required="true" args="-d $(find xrobot_cv)/rviz/color.rviz" />
+    <node pkg="xrobot_cv" type="object_detect.py" name="object_detect" required="true" output="screen">
+        <param name="image_topic" value="/camera/image_raw" />
+    </node>
+</launch>

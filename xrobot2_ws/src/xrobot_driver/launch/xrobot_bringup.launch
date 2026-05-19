@@ -1,0 +1,51 @@
+<launch>
+    <arg name="model" default="$(env XROBOT_MODEL)" doc="model type [8KT, TU]"/>
+
+    <!-- 修改使用的模块 -->
+    <arg name="chassis_type" default="Mecanum" doc="opt: [Ackerman, Mecanum]"/>
+    <arg name="lds_type" default="YDLIDAR-X2" doc="opt: [YDLIDAR-X2]"/>
+    <arg name="camera_type" default="astra" doc="opt: [astra, usb]"/>
+
+    <arg name="use_camera" default="false"/>
+    <arg name="use_lidar" default="true"/>
+
+    <arg name="multi_robot_name" default=""/>
+    <arg name="set_lidar_frame_id" default="laser_link"/>
+
+    <include file="$(find xrobot_driver)/launch/xrobot_core.launch">
+        <arg name="port" value="/dev/XCOM2"/>
+        <arg name="baud" value="512000"/>
+        <arg name="multi_robot_name" value="$(arg multi_robot_name)"/>
+    </include>
+
+    <group if="$(eval use_lidar)">
+        <include file="$(find xrobot_driver)/launch/xrobot_lidar.launch">
+            <arg name="port" value="/dev/XCOM3"/>
+            <arg name="lds_type" value="$(arg lds_type)"/>
+            <arg name="set_frame_id" value="$(arg set_lidar_frame_id)"/>
+        </include>
+    </group>
+
+    <group if = "$(eval chassis_type == 'Ackerman')">
+        
+    </group>
+
+    <!-- 启动usb相机驱动包  -->
+    <group if="$(eval use_camera)">
+        <group if="$(eval camera_type == 'usb')">
+            <include file="$(find xrobot_driver)/launch/xrobot_$(arg camera_type)_camera.launch">
+                <arg name="device_id" value="0"/>
+            </include>
+        </group>
+        <group unless="$(eval camera_type == 'astra')">
+            <include file="$(find xrobot_driver)/launch/xrobot_$(arg camera_type)_camera.launch">
+                <arg name="device_id" default="#1"/>
+            </include>
+        </group>
+    </group>
+    
+
+    <node pkg="xrobot_driver" type="xrobot_diagnostics.py" name="xrobot_diagnostics" output="screen"/>
+
+
+</launch>

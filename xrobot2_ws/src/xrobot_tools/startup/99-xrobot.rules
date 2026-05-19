@@ -1,0 +1,7 @@
+KERNEL=="video*", MODE:="0666", GROUP:="dialout"
+KERNEL=="js*", MODE:="0666", GROUP:="dialout"
+KERNEL=="XCOM*", MODE:="0666", GROUP:="dialout"
+
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", MODE:="0666", GROUP:="dialout"
+ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", MODE:="0666", GROUP:="dialout"
+ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="55d5", MODE:="0666", GROUP:="dialout"

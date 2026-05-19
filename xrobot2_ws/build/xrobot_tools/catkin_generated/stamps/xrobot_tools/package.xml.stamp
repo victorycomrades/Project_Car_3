@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>xrobot_tools</name>
+  <version>0.0.0</version>
+  <description>A handy tool to use</description>
+
+  <maintainer email="xrobot@todo.todo">xrobot</maintainer>
+
+  <license>MIT</license>
+
+  <depend>rospy</depend>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export></export>
+</package>

@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot2_ws/install
+
+Name: xrobot_tools
+Description: Description of xrobot_tools
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

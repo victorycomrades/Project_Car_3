@@ -1,0 +1,4 @@
+load STM32F407VETx 
+project name STCubeGenerated 
+project toolchain "MDK-ARM V5" 
+project path D:\WORK\project\8KT-M\code\MCU\MasterCtrl(STM32F407)_8KTM - v1.1_PCBv1.1\MDK-ARM\RTE\Device\STM32F407VETx\ 

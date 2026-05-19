@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<!--
+Various useful properties such as constants and materials 
+-->
+<robot name="xacro_properties" xmlns:xacro="http://ros.org/wiki/xacro">
+    <xacro:property name="M_PI" value="3.1415926535897931" /> 
+
+    <!-- Defining the colors used in this robot -->
+    <material name="White">
+        <color rgba="1 1 1 1"/>
+    </material>
+    <material name="Gray">
+        <color rgba="0.5 0.5 0.5 1"/>
+    </material>
+    <material name="LightGray">
+        <color rgba="0.6 0.6 0.6 1"/>
+    </material>
+    <material name="DarkGray">
+        <color rgba="0.3 0.3 0.3 1"/>
+    </material>
+    <material name="Black">
+        <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+    <material name="Red">
+        <color rgba="1 0 0 1"/>
+    </material>
+    <material name="Green">
+        <color rgba="0.0 0.8 0.0 1"/>
+    </material>
+    <material name="Blue">
+        <color rgba="0.0 0.0 1.0 1"/>
+    </material>
+    <material name="GreyBlue">
+        <color rgba="0.4 0.4 1.0 1"/>
+    </material>
+    <material name="Orange">
+        <color rgba="1.0 0.7 0.0 1"/>
+    </material>
+    <material name="Yellow">
+        <color rgba="1 0.4 0 1"/>
+    </material>
+    
+    <!-- Macro for inertia matrix -->
+    <xacro:macro name="sphere_inertial_matrix" params="m r">
+        <inertial>
+            <mass value="${m}" />
+            <inertia ixx="${2*m*r*r/5}" ixy="0" ixz="0"
+                iyy="${2*m*r*r/5}" iyz="0" 
+                izz="${2*m*r*r/5}" />
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="cylinder_inertial_matrix" params="m r h">
+        <inertial>
+            <mass value="${m}" />
+            <inertia ixx="${m*(3*r*r+h*h)/12}" ixy = "0" ixz = "0"
+                iyy="${m*(3*r*r+h*h)/12}" iyz = "0"
+                izz="${m*r*r/2}" /> 
+        </inertial>
+    </xacro:macro>
+
+    <xacro:macro name="box_inertial_matrix" params="m l w h">
+       <inertial>
+               <mass value="${m}" />
+               <inertia ixx="${m*(h*h + l*l)/12}" ixy = "0" ixz = "0"
+                   iyy="${m*(w*w + l*l)/12}" iyz= "0"
+                   izz="${m*(w*w + h*h)/12}" />
+       </inertial>
+   </xacro:macro>
+</robot>

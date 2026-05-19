@@ -1,0 +1,17 @@
+<!--imu ros 驱动-->
+<launch>
+    <!-- imu型号，默认 normal -->
+    <arg name="type" default="normal" doc="type [normal, modbus]"/>
+
+    <!-- imu 对应 python 文件 -->
+    <node pkg="wit_imu" type="wit_$(arg type)_ros.py" name="imu" output="screen">
+        <param name="port"               type = "str"    value="/dev/ttyUSB0"/>
+        <param name="baud"               type = "int"    value="9600"/>
+        <param name="imu_frame" value="$(arg imu_frame)"/>
+        <param name="imu_topic_name" value="$(arg imu_topic_name)"/>
+        <param name="mag_topic_name" value="$(arg mag_topic_name)"/>
+    </node>
+
+    <node pkg="wit_imu" type="get_imu_rpy.py" name="get_imu" output="screen">
+    </node>
+</launch>

@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot3_ws/install
+
+Name: robot_ctrl
+Description: Description of robot_ctrl
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lrobot_ctrl_pid
+Requires: roscpp std_msgs sensor_msgs geometry_msgs serial_comm

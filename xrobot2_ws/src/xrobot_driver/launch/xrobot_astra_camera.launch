@@ -1,0 +1,18 @@
+<launch>
+    <arg name="device_id" default="#1"/>
+    <arg name="frame_id" default="camera"/>
+    <arg name="camera_launch" default="astra.launch"/>
+    <!-- <arg name="rgb_frame_id"   default="$(arg camera)_rgb_optical_frame" />
+    <arg name="depth_frame_id" default="$(arg camera)_depth_optical_frame" /> -->
+    <arg name="rgb_camera_info_url" default=""/>
+    <arg name="depth_camera_info_url" default=""/>
+
+    <include file="$(find astra_camera)/launch/$(arg camera_launch)">
+        <param name="device_id" value="$(arg device_id)" />
+        <!-- <param name="rgb_frame_id"   value="$(arg rgb_frame_id)" />
+        <param name="depth_frame_id" value="$(arg depth_frame_id)" /> -->
+        <param name="rgb_camera_info_url"   value="$(arg rgb_camera_info_url)" />
+        <param name="depth_camera_info_url" value="$(arg depth_camera_info_url)" />
+    </include>
+    
+</launch>

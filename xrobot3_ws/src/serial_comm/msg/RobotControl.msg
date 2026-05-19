@@ -1,0 +1,10 @@
+int16 motor1_speed
+int16 motor2_speed
+int16 motor3_speed
+int16 motor4_speed
+int16 joint1_angle
+int16 joint2_angle
+int16 joint3_angle
+int16 wrist_angle
+int16 gripper_angle
+uint8 rest_flag

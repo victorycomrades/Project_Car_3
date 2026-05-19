@@ -1,0 +1,17 @@
+<launch>
+    <arg name="model" default="$(env XROBOT_MODEL)" doc="model type [8KT, TU]"/>
+    <arg name="multi_robot_name" default=""/>
+
+    <include file="$(find xrobot_description)/launch/includes/description.launch.xml">
+        <arg name="urdf_file" value="xrobot_8kt.xacro" />
+    </include>
+
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+    	<param name="rate" value="20.0"/>
+    </node>
+
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+        <param name="publish_frequency" type="double" value="20.0" />
+        <param name="tf_prefix" value="$(arg multi_robot_name)"/>
+    </node>
+</launch>

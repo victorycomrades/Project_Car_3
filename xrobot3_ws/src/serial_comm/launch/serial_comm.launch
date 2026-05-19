@@ -1,0 +1,8 @@
+<launch>
+
+  <node name="serial_node" pkg="serial_comm" type="serial_node" output="screen">
+
+    <param name="serial_port" value="/dev/XCOM2" />
+    <param name="baud_rate" value="115200" />
+  </node>
+</launch>

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>robot_ctrl</name>
+  <version>0.0.0</version>
+  <description>底盘控制ROS1节点</description>
+  <maintainer email="sun@example.com">Sun</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>serial_comm</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>serial_comm</run_depend>
+
+</package>

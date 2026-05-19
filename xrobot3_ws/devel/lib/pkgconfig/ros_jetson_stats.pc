@@ -1,0 +1,8 @@
+prefix=/home/xrobot/xrobot3_ws/devel
+
+Name: ros_jetson_stats
+Description: Description of ros_jetson_stats
+Version: 3.0.0
+Cflags: -I/home/xrobot/xrobot3_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/xrobot/xrobot3_ws/src/Robot_CTRL/include/Algorithm/pid.hpp
+stdint.h
+-
+
+/home/xrobot/xrobot3_ws/src/Robot_CTRL/src/Algorithm/pid.cpp
+Algorithm/pid.hpp
+/home/xrobot/xrobot3_ws/src/Robot_CTRL/src/Algorithm/Algorithm/pid.hpp
+
