@@ -10,6 +10,7 @@ project(xrobot_cv)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  std_msgs
   geometry_msgs
   sensor_msgs
   dynamic_reconfigure
@@ -106,7 +107,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES xrobot_cv
-  CATKIN_DEPENDS roscpp rospy geometry_msgs sensor_msgs dynamic_reconfigure
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs sensor_msgs dynamic_reconfigure
 #  DEPENDS system_lib
 )
 
@@ -163,6 +164,7 @@ include_directories(
  catkin_install_python(PROGRAMS
    scripts/object_detect.py
    scripts/follow.py
+   scripts/openmv_bridge.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

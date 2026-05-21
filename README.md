@@ -243,8 +243,8 @@ serial_dev.write_str("QR:123+231\n")
 建议后续统一通信协议，例如：
 
 ```text
-QR,123+231
-BLOB,RED,154,102,38,41
+QR,123+231,0,0
+BLOB,RED,-6,-18,154,102,38,41,1558
 LINE,12,-8
 STATE,PICK_RED
 ```
@@ -320,7 +320,7 @@ while not app.need_exit():
 3. 调试阈值时建议先单色测试，例如 `TARGET = "RED"`。
 4. 画面上绘制的是 `find_circles()` 真实检测到、参与圆心融合的圆，不再按比例伪造同心圆。
 5. 若多圆检测失败，程序会退回使用颜色区域几何中心，输出中的 `source` 会显示 `BLOB`。
-6. 输出 `RING,颜色,cx,cy,dx,dy,radius,score,density,ratio,source`，其中 `source=MULTI_HOUGHn` 表示融合了 n 个真实圆，`cx, cy` 是给机械臂使用的目标中心。
+6. 输出 `RING,颜色,dx,dy,cx,cy,radius,score,density,ratio,source`，其中 `source=MULTI_HOUGHn` 表示融合了 n 个真实圆，`dx, dy` 是给机械臂闭环对准使用的中心偏差。
 
 色环多圆融合调试结论：
 
@@ -398,9 +398,9 @@ while not app.need_exit():
 
 ```text
 QR,123+231
-BLOB,RED,cx,cy,w,h,area,dx,dy
-RING,RED,cx,cy,dx,dy,radius,score,density,ratio,source
-LINE,theta,rho
+BLOB,RED,dx,dy,cx,cy,w,h,area
+RING,RED,dx,dy,cx,cy,radius,score,density,ratio,source
+LINE,dx,theta
 NONE,RING,RED
 ```
 
@@ -494,15 +494,15 @@ QR,123+231
 颜色物料：
 
 ```text
-BLOB,RED,154,102,38,41
-BLOB,GREEN,120,98,34,36
-BLOB,BLUE,188,105,40,39
+BLOB,RED,-6,-18,154,102,38,41,1558
+BLOB,GREEN,-40,-22,120,98,34,36,1224
+BLOB,BLUE,28,-15,188,105,40,39,1560
 ```
 
 字段含义：
 
 ```text
-BLOB,颜色,中心x,中心y,宽度,高度
+BLOB,颜色,dx,dy,中心x,中心y,宽度,高度,面积
 ```
 
 巡线或车道偏差：
@@ -816,8 +816,8 @@ ROS1 工作空间，包结构：
 
 ```text
 QR,123+231
-BLOB,RED,cx,cy,w,h,area,dx,dy
-RING,RED,cx,cy,dx,dy,radius,score,density,ratio,source
+BLOB,RED,dx,dy,cx,cy,w,h,area
+RING,RED,dx,dy,cx,cy,radius,score,density,ratio,source
 LINE,dx,theta
 NONE,QR
 NONE,BLOB,RED
@@ -850,10 +850,150 @@ MaixCam --UART--> Jetson Nano / ROS --UART--> STM32F407 --电机/舵机/传感�
 - **Jetson Nano**: 任务决策、状态机、路径规划、ROS 节点调度、数据融合
 - **STM32**: 底层实时控制（电机闭环、舵机动作、机械爪时序、编码器、安全保护）
 
-### 10.8 推荐实施方案
+### 10.8 xrobot4_ws — Jetson Nano 上位机工作空间
 
-1. 调通 MaixCam → Jetson Nano 的 **UART 串口** 通信（当前目标）
-2. Jetson 上写 ROS 节点读取串口，发布为 ROS topic
+存放我们的 Jetson Nano 端 ROS 代码，当前包含 MaixCam UART 串口桥接包。
+
+#### 10.8.1 目录结构
+
+```text
+xrobot4_ws/
+├── src/
+│   ├── CMakeLists.txt                              # catkin 工作空间顶层
+│   └── maixcam_uart_bridge/                        # MaixCam UART 桥接 ROS 包
+│       ├── CMakeLists.txt
+│       ├── package.xml
+│       ├── setup.py
+│       ├── launch/
+│       │   └── maixcam_uart_bridge.launch          # 启动文件
+│       ├── scripts/
+│       │   └── maixcam_uart_bridge_node.py         # ROS 桥接节点
+│       ├── src/maixcam_uart_bridge/
+│       │   ├── __init__.py
+│       │   └── protocol.py                         # 协议解析库
+│       └── test/
+│           └── test_protocol.py                    # 协议单元测试
+```
+
+#### 10.8.2 硬件接线
+
+MaixCam ↔ Jetson Nano（UART 串口）：
+
+```text
+MaixCam A19 (TX)  ↔  Jetson RX  (USB-UART 转接器或 J41 pin 10)
+MaixCam A18 (RX)  ↔  Jetson TX  (USB-UART 转接器或 J41 pin 8)
+MaixCam GND       ↔  Jetson GND
+```
+
+推荐使用 USB-UART 转接器（CH340/FT232），插入 Jetson Nano USB 口后设备为 `/dev/ttyUSB0`。
+
+#### 10.8.3 Jetson Nano 端部署
+
+```bash
+# 1. 将 xrobot4_ws 放到 Jetson Nano
+cd ~/xrobot4_ws
+
+# 2. 安装依赖
+sudo apt install python3-pip
+pip3 install pyserial
+
+# 3. 编译
+catkin_make
+source devel/setup.bash
+
+# 4. 启动 roscore + 桥接节点
+roscore &
+roslaunch maixcam_uart_bridge maixcam_uart_bridge.launch port:=/dev/ttyUSB0
+```
+
+#### 10.8.4 MaixCam 端运行
+
+在 MaixVision 中打开并运行主脚本：
+
+```text
+MaixCam/maixcam_tests/maixcam_uart_vision.py
+```
+
+启动后 MaixCam 屏幕显示当前 MODE，终端打印 `HELLO,MAIXCAM_UART,115200`。
+
+#### 10.8.5 切换视觉模式
+
+在 Jetson 上通过 ROS topic 下发指令：
+
+```bash
+# 基础模式
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,QR'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,BLOB,RED'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,BLOB,GREEN'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,BLOB,BLUE'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,BLOB,ALL'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,RING,RED'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,RING,GREEN'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,RING,BLUE'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,RING,ALL'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,LINE'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,IDLE'" -1
+```
+
+也可以省略 `MODE,` 前缀（如 `QR`），节点会自动补全。
+
+#### 10.8.6 查看 ROS 输出
+
+```bash
+rostopic echo /vision/status          # 连接状态
+rostopic echo /vision/raw             # MaixCam 原始文本行
+rostopic echo /vision/qrcode          # 二维码内容
+rostopic echo /vision/blob/center     # 色块中心偏差 (x=dx, y=dy, z=area)
+rostopic echo /vision/ring/center     # 色环中心偏差 (x=dx, y=dy, z=radius)
+rostopic echo /vision/line            # 巡线偏差 (x=dx, theta=theta)
+rostopic echo /vision/none            # 未识别到目标
+```
+
+#### 10.8.7 通信协议
+
+MaixCam → Jetson（每行以 `\n` 结尾）：
+
+```text
+QR,123+231
+BLOB,RED,dx,dy,cx,cy,w,h,area
+RING,RED,dx,dy,cx,cy,radius,score,density,ratio,source
+LINE,dx,theta
+NONE,QR
+NONE,BLOB,RED
+NONE,RING,BLUE
+INFO,MODE,BLOB_RED
+HELLO,MAIXCAM_UART,115200
+```
+
+Jetson → MaixCam（每行以 `\n` 结尾）：
+
+```text
+MODE,QR
+MODE,BLOB,RED
+MODE,RING,RED
+MODE,LINE
+MODE,IDLE
+PING
+```
+
+**坐标说明**：`dx = cx - WIDTH//2`，`dy = cy - HEIGHT//2`，即目标中心点相对于相机画面中心的像素偏差。正值表示目标在画面中心右侧/下方，负值表示左侧/上方。机械臂控制时直接用 `(dx, dy)` 做闭环对准。
+
+#### 10.8.8 运行协议测试
+
+```bash
+cd ~/xrobot4_ws
+python3 -m unittest discover -s src/maixcam_uart_bridge/test -v
+```
+
+#### 10.8.9 可复用的现有代码
+
+- **xrobot3_ws 的 `serial_comm` 包**：Jetson ↔ STM32 串口通信，含 SD/ZD 二进制协议、CRC16 校验、IMU/超声波/巡线传感器数据发布。可直接复用或参照。
+- **xrobot3_ws 的 `Robot_CTRL` 包**：麦克纳姆轮运动学解算、PID 控制，可在此基础上加入视觉闭环或自动导航逻辑。
+
+### 10.9 后续实施步骤
+
+1. ✅ 调通 MaixCam → Jetson Nano 的 **UART 串口** 通信（maixcam_uart_bridge）
+2. Jetson 上运行 `maixcam_uart_bridge_node.py`，确认 ROS topic 有数据
 3. 调通 Jetson Nano → STM32 的串口通信（可复用 xrobot3_ws 的 `serial_comm` 包）
 4. Jetson 上写 `task_manager_node`，把视觉结果和 STM32 动作串成完整状态机
 5. 最后做全流程联调

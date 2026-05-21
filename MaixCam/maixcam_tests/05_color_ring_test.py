@@ -1,23 +1,43 @@
 from maix import app, camera, display, image
 
-
-# MaixVision color-ring test.
-# Goal: detect red/green/blue scoring rings, draw circular outlines, mark the
-# center cross and center coordinates, and output the center point for arm
-# alignment.
 WIDTH = 320
 HEIGHT = 240
 
-# Change this before running:
-#   "ALL", "RED", "GREEN", "BLUE"
-TARGET = "ALL"
+# ---- UART 配置（设为 None 则仅打印到终端）-----------------------------------
+UART_DEVICE = None      # 改为 "/dev/ttyS0" 或 "/dev/ttyS1" 启用串口输出
+UART_BAUD = 115200
 
-# Keep ROI as small as possible after the camera position is fixed.
-# Format: [x, y, w, h]
+uart_dev = None
+
+def uart_init():
+    global uart_dev
+    if UART_DEVICE is None:
+        return
+    try:
+        if UART_DEVICE == "/dev/ttyS1":
+            from maix import pinmap
+            pinmap.set_pin_function("A18", "UART1_RX")
+            pinmap.set_pin_function("A19", "UART1_TX")
+        from maix import uart
+        uart_dev = uart.UART(UART_DEVICE, UART_BAUD)
+        print("UART opened:", UART_DEVICE)
+    except Exception as err:
+        print("UART open failed:", err)
+
+def uart_write(text):
+    print(text)
+    if uart_dev is None:
+        return
+    try:
+        uart_dev.write_str(str(text) + "\n")
+    except Exception:
+        pass
+
+uart_init()
+
+TARGET = "ALL"
 ROI = [0, 0, WIDTH, HEIGHT]
 
-# LAB thresholds for printed rings. These are broad starting values.
-# Please tune them with MaixCam's built-in Find Blobs app.
 RING_COLORS = {
     "RED": {
         "threshold": [0, 95, 25, 90, -10, 90],
@@ -33,27 +53,21 @@ RING_COLORS = {
     },
 }
 
-# Rings are thin and may be dashed, so keep thresholds modest.
 PIXELS_THRESHOLD = 50
 AREA_THRESHOLD = 50
 MERGE_MARGIN = 22
 
-# Basic shape filters. Adjust them if the ring is very small in the image.
 MIN_RING_SIZE = 22
 MAX_RING_SIZE = 210
-MIN_SQUARE_RATIO = 68     # min(w, h) / max(w, h) * 100
-MAX_INK_DENSITY = 55      # blob pixels / bbox area * 100
+MIN_SQUARE_RATIO = 68
+MAX_INK_DENSITY = 55
 
-# Optional circle refinement. Keep False first. On MaixCam, find_circles can be
-# memory-heavy if ROI is large. Only enable it after ROI is small and stable.
 USE_HOUGH_REFINE = False
 CIRCLE_THRESHOLD = 2800
 R_MIN = 10
 R_MAX = 95
 R_STEP = 3
 
-# Visual overlay. The ring center stays clean: only a blue cross and coordinate
-# text are placed near the center. Color names are placed outside the ring.
 DRAW_CONCENTRIC = True
 RING_RATIO_LIST = [1.00, 0.84, 0.68, 0.52]
 
@@ -77,37 +91,29 @@ def density_percent(blob):
 
 
 def square_ratio(blob):
-    w = blob.w()
-    h = blob.h()
+    w, h = blob.w(), blob.h()
     if w <= 0 or h <= 0:
         return 0
     return min(w, h) * 100 // max(w, h)
 
 
 def is_ring_like(blob):
-    w = blob.w()
-    h = blob.h()
+    w, h = blob.w(), blob.h()
     if w < MIN_RING_SIZE or h < MIN_RING_SIZE:
         return False
     if w > MAX_RING_SIZE or h > MAX_RING_SIZE:
         return False
     if square_ratio(blob) < MIN_SQUARE_RATIO:
         return False
-
-    # A ring is hollow, so its colored-pixel density in the bounding area should
-    # not be too high. This helps reject solid colored objects.
     if density_percent(blob) > MAX_INK_DENSITY:
         return False
-
     return True
 
 
 def ring_score(blob):
     size_score = blob.w() * blob.h()
     square_score = square_ratio(blob) * 30
-    density = density_percent(blob)
-    # Prefer medium/low density, but avoid tiny noise by still rewarding size.
-    density_score = max(0, 60 - density) * 10
+    density_score = max(0, 60 - density_percent(blob)) * 10
     return size_score + square_score + density_score
 
 
@@ -120,11 +126,7 @@ def find_best_ring_blob(img, threshold):
         merge=True,
         margin=MERGE_MARGIN,
     )
-    candidates = []
-    for blob in blobs:
-        if is_ring_like(blob):
-            candidates.append(blob)
-
+    candidates = [b for b in blobs if is_ring_like(b)]
     if not candidates:
         return None
     return max(candidates, key=ring_score)
@@ -132,11 +134,9 @@ def find_best_ring_blob(img, threshold):
 
 def clamp_roi(x, y, w, h):
     if x < 0:
-        w += x
-        x = 0
+        w += x; x = 0
     if y < 0:
-        h += y
-        y = 0
+        h += y; y = 0
     if x + w > WIDTH:
         w = WIDTH - x
     if y + h > HEIGHT:
@@ -186,14 +186,11 @@ def refine_with_hough(img, blob, fallback, draw_color):
         dy = c.y() - fy
         if dx * dx + dy * dy <= 25 * 25:
             selected.append(c)
-
     if not selected:
         selected = circles[:3]
 
     weight_sum = 0
-    sx = 0
-    sy = 0
-    sr = 0
+    sx = sy = sr = 0
     score = 0
     for c in selected:
         weight = c.magnitude()
@@ -215,7 +212,6 @@ def smooth(color_name, cx, cy):
     if color_name not in smooth_centers:
         smooth_centers[color_name] = [cx, cy]
         return cx, cy
-
     old_x, old_y = smooth_centers[color_name]
     new_x = int(old_x * (1.0 - SMOOTH_ALPHA) + cx * SMOOTH_ALPHA)
     new_y = int(old_y * (1.0 - SMOOTH_ALPHA) + cy * SMOOTH_ALPHA)
@@ -233,29 +229,19 @@ def draw_ring_overlay(img, color_name, cx, cy, radius, draw_color):
         else:
             img.draw_circle(cx, cy, radius, draw_color, 2)
 
-    # Color name outside the ring.
-    img.draw_string(
-        max(0, cx - 18),
-        max(0, cy - radius - 16),
-        color_name,
-        draw_color,
-    )
-
-    # Center area: only cross + coordinate.
+    img.draw_string(max(0, cx - 18), max(0, cy - radius - 16),
+                    color_name, draw_color)
     img.draw_cross(cx, cy, image.COLOR_BLUE, 12, 3)
-    img.draw_string(
-        max(0, cx + 8),
-        max(0, cy - 8),
-        "(%d,%d)" % (cx, cy),
-        image.COLOR_BLUE,
-    )
+    dx = cx - WIDTH // 2
+    dy = cy - HEIGHT // 2
+    img.draw_string(max(0, cx + 8), max(0, cy - 8),
+                    "d(%d,%d)" % (dx, dy), image.COLOR_BLUE)
 
 
 def detect_color_ring(img, color_name):
     config = RING_COLORS[color_name]
     draw_color = config["draw"]
     blob = find_best_ring_blob(img, config["threshold"])
-
     if blob is None:
         return None
 
@@ -269,16 +255,12 @@ def detect_color_ring(img, color_name):
     density = density_percent(blob)
     ratio = square_ratio(blob)
 
-    report = (
-        "RING,%s,%d,%d,%d,%d,%d,%d,%d,%d,%s"
-        % (color_name, cx, cy, dx, dy, radius, score, density, ratio, source)
-    )
+    report = "RING,%s,%d,%d,%d,%d,%d,%d,%d,%d,%s" % (
+        color_name, dx, dy, cx, cy, radius, score, density, ratio, source)
 
     return {
         "color_name": color_name,
-        "cx": cx,
-        "cy": cy,
-        "radius": radius,
+        "cx": cx, "cy": cy, "radius": radius,
         "draw_color": draw_color,
         "report": report,
     }
@@ -288,9 +270,8 @@ cam = camera.Camera(WIDTH, HEIGHT)
 disp = display.Display()
 frame_id = 0
 
-print("RGB color ring test started.")
+print("RGB color ring test started (dx,dy = offset from image center).")
 print("TARGET =", TARGET)
-print("Output: RING,color,cx,cy,dx,dy,radius,score,density,ratio,source")
 
 while not app.need_exit():
     img = cam.read()
@@ -302,24 +283,16 @@ while not app.need_exit():
         if result:
             results.append(result)
 
-    # Draw only after all color detection is finished. Otherwise the blue center
-    # marker drawn for RED/GREEN can be detected as a false BLUE target.
     for result in results:
-        draw_ring_overlay(
-            img,
-            result["color_name"],
-            result["cx"],
-            result["cy"],
-            result["radius"],
-            result["draw_color"],
-        )
+        draw_ring_overlay(img, result["color_name"], result["cx"],
+                          result["cy"], result["radius"], result["draw_color"])
 
     if frame_id % 8 == 0:
         if results:
             for result in results:
-                print(result["report"])
+                uart_write(result["report"])
         else:
-            print("NONE,RING,%s" % TARGET)
+            uart_write("NONE,RING,%s" % TARGET)
 
     frame_id += 1
     disp.show(img)

@@ -14,6 +14,7 @@ files:
   - maixcam_tests\05_color_ring_test.py
   - maixcam_tests\06_color_ring_multi_circle_test.py
   - maixcam_tests\main.py
+  - maixcam_tests\maixcam_uart_vision.py
   - maixcam_tests\README.md
   - app.yaml
   - main.py

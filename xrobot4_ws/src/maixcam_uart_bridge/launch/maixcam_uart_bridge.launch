@@ -1,0 +1,15 @@
+<launch>
+  <arg name="port" default="/dev/ttyUSB0" />
+  <arg name="baud" default="115200" />
+  <arg name="topic_prefix" default="/vision" />
+  <arg name="frame_id" default="maixcam" />
+
+  <node pkg="maixcam_uart_bridge" type="maixcam_uart_bridge_node.py"
+        name="maixcam_uart_bridge" output="screen" respawn="true">
+    <param name="port" value="$(arg port)" />
+    <param name="baud" value="$(arg baud)" />
+    <param name="topic_prefix" value="$(arg topic_prefix)" />
+    <param name="frame_id" value="$(arg frame_id)" />
+    <param name="reconnect_delay" value="1.0" />
+  </node>
+</launch>

@@ -1,0 +1,37 @@
+<launch>
+  <arg name="camera_port" default="/dev/ttyUSB0" />
+  <arg name="camera_baud" default="115200" />
+  <arg name="camera_startup_mode" default="QR" />
+  <arg name="start_use_keyboard" default="true" />
+  <arg name="start_gpio_path" default="" />
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find xrobot_arm)/maps/map.yaml" />
+
+  <include file="$(find xrobot_driver)/launch/xrobot_remote.launch" />
+
+  <node pkg="tf" type="static_transform_publisher" name="map_to_odom_combined_broadcaster"
+        args="0 0 0 0 0 0 map odom_combined 100" />
+
+  <include file="$(find xrobot_navigation)/launch/move_base.launch" />
+
+  <include file="$(find xrobot_arm)/launch/robot_pose_ekf_fused.launch">
+    <arg name="odom_topic" value="odom" />
+    <arg name="imu_topic" value="imu/data_raw" />
+    <arg name="vo_topic" value="vo" />
+  </include>
+
+  <node pkg="xrobot_arm" type="start_button.py" name="start_button" output="screen">
+    <param name="use_keyboard" value="$(arg start_use_keyboard)" />
+    <param name="gpio_path" value="$(arg start_gpio_path)" />
+  </node>
+
+  <node pkg="xrobot_cv" type="openmv_bridge.py" name="openmv_bridge" output="screen">
+    <param name="port" value="$(arg camera_port)" />
+    <param name="baud" value="$(arg camera_baud)" />
+    <param name="startup_mode" value="$(arg camera_startup_mode)" />
+  </node>
+
+  <node pkg="xrobot_arm" type="task_manager.py" name="task_manager" output="screen" />
+  <node pkg="xrobot_arm" type="nav_map_controller.py" name="nav_map_controller" output="screen" />
+  <node pkg="xrobot_arm" type="stm32_comm.py" name="stm32_comm" output="screen" />
+</launch>
