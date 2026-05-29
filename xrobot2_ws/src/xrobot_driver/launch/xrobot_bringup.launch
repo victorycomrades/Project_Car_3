@@ -14,7 +14,7 @@
 
     <include file="$(find xrobot_driver)/launch/xrobot_core.launch">
         <arg name="port" value="/dev/XCOM2"/>
-        <arg name="baud" value="512000"/>
+        <arg name="baud" value="115200"/>
         <arg name="multi_robot_name" value="$(arg multi_robot_name)"/>
     </include>
 

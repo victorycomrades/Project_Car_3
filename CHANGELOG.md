@@ -1,6 +1,56 @@
 # 修改日志
 
-## 2026-05-19 — MaixCam UART 串口通信 + 坐标系改造
+## 2026-05-19 (第二部分) — xrobot2_ws 串口节点 rosserial → SD/ZD 协议替换
+
+### 问题
+
+`xrobot_bringup.launch` 启动时报错：
+```
+[ERROR] Unable to sync with device; possible link problem or link software version
+mismatch such as hydro rosserial_python with groovy Arduino
+```
+
+### 根因
+
+xrobot2_ws 的 `serial_node.py` 使用 **rosserial_python** 与 STM32 通信。rosserial 要求 STM32 固件也集成 rosserial 库（类似 Arduino `ros.h`），但 8KTM-ROS 里的 STM32 固件是裸 HAL 代码，不含 rosserial 协议支持。rosserial 握手失败 → 持续报 ERROR。
+
+而 xrobot3_ws 的 `serial_comm` 使用 **LibSerial + 自定义 SD/ZD 二进制协议**，不依赖 rosserial，所以能正常启动。
+
+### 修改内容
+
+#### 1. 新建 `serial_node_new.py`
+`xrobot2_ws/src/xrobot_driver/scripts/serial_node_new.py`
+
+- 用 **pyserial** 替代 rosserial_python，SD/ZD 二进制协议与 xrobot3_ws `serial_comm` 完全兼容
+- 实现了完整的 CRC16-IBM 校验、SD 帧解析、ZD 帧构建
+- STM32 未连接时：WARN 级别日志 + 自动重试，不阻塞 bringup 其他节点启动
+- 发布 topic：`/imu/data`、`/ultrasonic`、`/line_sensor`（与 xrobot3_ws 一致）
+- 订阅 topic：`/robot_cmd`（std_msgs/String，10 个逗号分隔整数值：m1,m2,m3,m4,j1,j2,j3,wrist,gripper,reset）
+
+#### 2. 修改 `xrobot_core.launch`
+`xrobot2_ws/src/xrobot_driver/launch/xrobot_core.launch`
+
+- 节点从 `serial_node.py`（rosserial）改为 `serial_node_new.py`（pyserial + SD/ZD）
+
+#### 3. 修改 `xrobot_bringup.launch`
+`xrobot2_ws/src/xrobot_driver/launch/xrobot_bringup.launch`
+
+- 波特率从 `512000` 改为 `115200`（匹配 STM32 固件 USART2 和 xrobot3_ws）
+
+### 使用方式
+
+```bash
+cd ~/xrobot2_ws
+catkin_make
+source devel/setup.bash
+roslaunch xrobot_driver xrobot_bringup.launch
+```
+
+现在 STM32 即使未连接也不会报 ERROR，节点会静默重试直到串口可用。
+
+---
+
+## 2026-05-19 (第一部分) — MaixCam UART 串口通信 + 坐标系改造
 
 ### 修改目标
 

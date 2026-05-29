@@ -4,11 +4,10 @@
     <arg name="baud" default="115200"/>
     <arg name="multi_robot_name" default=""/>
 
-    <node pkg="xrobot_driver" type="serial_node.py" name="xrobot_core" output="screen">
+    <!-- 使用 pyserial + SD/ZD 协议（兼容 xrobot3_ws serial_comm），不再依赖 rosserial_python -->
+    <node pkg="xrobot_driver" type="serial_node_new.py" name="xrobot_core" output="screen">
         <param name="port" value="$(arg port)"/>
         <param name="baud" value="$(arg baud)"/>
-        <param name="auto_reset_timeout" value="0.1"/>
-        <param name="tf_prefix" value="$(arg multi_robot_name)"/>
     </node>
 
 </launch>

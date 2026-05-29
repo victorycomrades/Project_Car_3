@@ -997,3 +997,404 @@ python3 -m unittest discover -s src/maixcam_uart_bridge/test -v
 3. 调通 Jetson Nano → STM32 的串口通信（可复用 xrobot3_ws 的 `serial_comm` 包）
 4. Jetson 上写 `task_manager_node`，把视觉结果和 STM32 动作串成完整状态机
 5. 最后做全流程联调
+
+## 11. 眼在手上标定与抓取策略
+
+当前机械结构按“相机跟随机械臂末端运动”理解，属于 **眼在手上（eye-in-hand）**。初赛评分要求物料精准摆放到色环内，且按环数计分，因此不能只依赖粗略的颜色识别，需要建立“图像坐标 -> 机械臂动作”的标定关系，并在实际抓取时保留视觉闭环微调。
+
+### 11.1 内参、外参与手眼关系
+
+**内参**描述 MaixCam 自身成像模型：
+
+```text
+fx, fy   焦距，单位为像素
+cx, cy   主点，接近图像中心
+dist     畸变参数，例如 k1, k2, p1, p2, k3
+```
+
+内参用于把图像上的标定板角点恢复成相机坐标系下的位姿。求外参/手眼关系前，应先完成内参标定。
+
+**眼在手上外参**建议记录为：
+
+```text
+T_gripper_camera
+```
+
+含义是相机坐标系相对于机械臂末端/夹爪坐标系的固定变换。它用于回答：相机看到目标在某个位置时，机械臂末端应移动到哪里才能抓取。
+
+### 11.2 数据采集顺序
+
+采集时可以“拍照和记录末端状态同时做”，但计算时有明确顺序：
+
+```text
+第 i 次采集：
+1. 机械臂运动到一个标定姿态并停稳
+2. MaixCam 拍摄标定板图片 image_i
+3. 记录此时末端位姿 T_base_gripper_i
+   或记录关节角 q_i，后续通过正运动学计算末端位姿
+```
+
+后处理顺序：
+
+```text
+图片集 -> OpenCV calibrateCamera() -> camera_matrix, dist_coeffs
+每张图片 + 内参 -> OpenCV solvePnP() -> T_camera_target_i
+每组关节角/末端位姿 -> T_base_gripper_i
+所有配对数据 -> OpenCV calibrateHandEye() -> T_gripper_camera
+```
+
+注意：OpenCV 的手眼标定不能直接只输入“照片 + 舵机角度”。它需要：
+
+```text
+R_gripper2base, t_gripper2base
+R_target2cam,   t_target2cam
+```
+
+其中 `R_target2cam, t_target2cam` 由内参和 `solvePnP()` 得到；`R_gripper2base, t_gripper2base` 由机械臂末端位姿或关节角正运动学得到。
+
+### 11.3 内参获取步骤
+
+1. 固定比赛使用分辨率，建议先统一使用 `320x240`。
+2. 打印棋盘格、ArUco 或 ChArUco 标定板，棋盘格方格边长建议 `20mm` 或 `25mm`。
+3. 用 MaixCam 从不同角度、不同位置、不同距离拍摄 20-40 张标定板图片。
+4. 将图片导出到电脑或 Jetson。
+5. 使用 OpenCV `calibrateCamera()` 求 `camera_matrix` 和 `dist_coeffs`。
+6. 保存为 `camera_intrinsics.yaml`，后续所有定位计算使用同一分辨率和同一组内参。
+
+### 11.4 现有代码中可用的机械臂信息
+
+当前没有发现现成的 ROS 末端位姿反馈 topic。
+
+已有能力：
+
+- `xrobot3_ws/src/serial_comm/msg/RobotControl.msg`：可下发 3 个关节角、腕部角、夹爪角和底盘电机速度。
+- `xrobot3_ws/src/serial_comm/src/serial_node.cpp`：将 `/robot_cmd` 转成 Jetson -> STM32 的 `ZD` 控制帧。
+- `8KTM-ROS/User/Task/src/thread_sensor.c`：STM32 侧接收 `ZD` 控制帧，保存到 `g_rc_command`；同时通过 `SD` 帧上传 IMU、超声波、巡线等传感器数据。
+- `8KTM-ROS/User/Function/src/SCARA.c`：包含机械臂正解、反解和舵机 PWM/角度互转函数。
+
+关键函数：
+
+```c
+calculate_SCARA_forward_Transform()  // 关节角 -> 末端坐标
+calculate_delta()                    // 末端坐标 -> 关节角
+Servo_PWMToAngle()                   // 舵机 PWM -> 机械臂角度
+Servo_AngleToPWM()                   // 机械臂角度 -> 舵机 PWM
+```
+
+当前限制：
+
+- ROS 端目前主要是下发目标角度，不发布真实关节角反馈。
+- `thread_sensor.c` 中 `Robot_arm_task()` 里实际执行 `arm_ctrl(&g_rc_command)` 的调用目前是注释状态，需要联调确认是否启用。
+- 短期做标定时，可以在机械臂停稳后把“下发的目标角度”近似当作当前关节角；更高精度方案需要 STM32 读取舵机当前位置并回传。
+
+后续建议新增：
+
+```text
+STM32 读取舵机当前位置/当前角度
+-> 加入 SD 反馈帧或新增机械臂状态帧
+-> serial_comm 解析
+-> ROS 发布 /arm/joint_states 或 /arm/end_effector_pose
+```
+
+### 11.5 如果暂时拿不到完整末端位姿
+
+如果短期内只能获得舵机目标值，不能稳定获得真实末端位姿，可以先做“平面抓取标定”：
+
+```text
+图像坐标 (u, v) <-> 机械臂抓取平面坐标 (X, Y)
+```
+
+用 OpenCV `findHomography()` 建立映射：
+
+```text
+H: image(u,v) -> arm_plane(X,Y)
+```
+
+适用范围：
+
+- 相机观察姿态固定；
+- 目标在同一高度平面；
+- 原料区抓取、车载承载区、粗加工区、暂存区可能需要分别标定。
+
+平面标定比完整手眼标定简单，适合先把比赛流程跑起来；完整手眼标定适合后续提高通用性和速度。
+
+### 11.6 实际抓取推荐流程
+
+实际运行建议使用“两段式”：先根据标定快速到目标附近，再用视觉微调。
+
+```text
+1. 机械臂到观察位
+2. MaixCam 识别目标，输出 cx, cy, dx, dy
+3. 用手眼标定或平面标定估算目标在机械臂/底座坐标系的位置
+4. 机械臂快速移动到预抓取位
+5. 停稳后重新拍照
+6. 根据新的 dx, dy 小步微调 X/Y
+7. 误差进入阈值后下探
+8. 夹爪闭合，完成抓取
+```
+
+重要原则：
+
+- 机械臂每运动一次，旧图像只适合计算旧时刻的目标位置。
+- 若目标不动，旧图像计算出的目标底座坐标仍可作为快速接近的参考。
+- 做微调时应使用“最新图像 + 当前机械臂位姿/当前目标角度”。
+- 初期不要边运动边连续计算，先采用“停稳 -> 拍照 -> 计算 -> 移动 -> 再停稳”的离散闭环。
+
+推荐阈值可从以下范围开始调：
+
+```text
+abs(dx) < 5-10 px
+abs(dy) < 5-10 px
+连续 3 帧满足阈值后再下探抓取
+```
+
+### 11.7 推荐落地顺序
+
+1. 固定 MaixCam 到机械臂末端，安装后不要再移动相机。
+2. 固定 MaixCam 分辨率，优先使用 `320x240`。
+3. 完成红、绿、蓝物料和色环 LAB 阈值标定。
+4. 拍摄标定板图片，求 MaixCam 内参。
+5. 确认机械臂能否获得当前关节角或末端位姿。
+6. 若能获得末端位姿，做标准 eye-in-hand 手眼标定。
+7. 若暂时不能获得末端位姿，先做每个工位的平面 Homography 标定。
+8. 实现“观察位快速接近 + 预抓取位视觉微调 + 下探抓取”。
+9. 后续再补 STM32 -> ROS 的机械臂状态反馈，提高标定和控制精度。
+
+### 11.8 OpenCV 标定函数的输入、输出和使用方式
+
+#### 11.8.1 `calibrateCamera()`：求相机内参
+
+`calibrateCamera()` 不是直接把图片传进去就能自动算出内参。它需要两类点：
+
+```text
+objectPoints：标定板角点在真实世界中的坐标，单位通常是 mm
+imagePoints：同一批角点在图片中的像素坐标，单位是 pixel
+```
+
+以棋盘格为例，如果棋盘格每格边长是 `25mm`，内角点数量是 `9 x 6`，则某一张图对应的真实角点可以写成：
+
+```text
+(0, 0, 0), (25, 0, 0), (50, 0, 0), ...
+(0, 25, 0), (25, 25, 0), ...
+```
+
+因为棋盘格是平面，所以所有点的 `Z=0`。这些点就是 `objectPoints`。
+
+然后 OpenCV 用 `findChessboardCorners()` 或 ArUco/ChArUco 检测图片中的角点，得到：
+
+```text
+(u1, v1), (u2, v2), (u3, v3), ...
+```
+
+这些像素坐标就是 `imagePoints`。
+
+输入大致是：
+
+```python
+ret, camera_matrix, dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
+    objectPoints,
+    imagePoints,
+    imageSize,
+    None,
+    None
+)
+```
+
+输出含义：
+
+```text
+camera_matrix：相机内参矩阵 K
+dist_coeffs：镜头畸变参数
+rvecs/tvecs：每张标定图片中，标定板相对于相机的位姿
+ret：重投影误差，越小越好
+```
+
+内参矩阵通常长这样：
+
+```text
+K = [ fx  0  cx
+      0  fy  cy
+      0   0   1 ]
+```
+
+`fx, fy, cx, cy, dist_coeffs` 后续会用于 `solvePnP()`、图像去畸变和像素坐标转空间射线。
+
+#### 11.8.2 `solvePnP()`：求某一张图中标定板相对于相机的位姿
+
+`solvePnP()` 做的是 Perspective-n-Point 问题：已知一组 3D 点和它们在图像中的 2D 像素点，再结合相机内参，求“这个 3D 物体在相机坐标系下的位置和姿态”。
+
+对手眼标定来说，它用来求：
+
+```text
+T_camera_target
+```
+
+含义是：标定板 target 坐标系相对于相机 camera 坐标系的变换。
+
+输入：
+
+```text
+objectPoints：标定板角点真实坐标，例如棋盘格上的 (X,Y,0)
+imagePoints：同一角点在当前图片里的像素坐标 (u,v)
+camera_matrix：calibrateCamera() 得到的内参矩阵
+dist_coeffs：calibrateCamera() 得到的畸变参数
+```
+
+调用形式：
+
+```python
+ok, rvec, tvec = cv2.solvePnP(
+    objectPoints,
+    imagePoints,
+    camera_matrix,
+    dist_coeffs
+)
+```
+
+输出：
+
+```text
+rvec：旋转向量，可用 Rodrigues() 转成旋转矩阵 R_camera_target
+tvec：平移向量，即标定板原点在相机坐标系下的位置
+```
+
+也就是说，`solvePnP()` 解决的是“这一张照片里，标定板在相机前方哪里、转了多少角度”。它不是手眼外参，但它是手眼标定必须用的一半数据。
+
+#### 11.8.3 `calibrateHandEye()`：求眼在手上的外参
+
+`calibrateHandEye()` 才是求手眼关系的函数。眼在手上时，目标是求：
+
+```text
+T_gripper_camera
+```
+
+含义是：相机坐标系相对于机械臂末端/夹爪坐标系的固定变换。只要相机没有重新安装，这个变换就是固定的。
+
+它需要多组同步数据。每一组包括：
+
+```text
+T_base_gripper_i：第 i 次拍照时，机械臂末端在机械臂基坐标系下的位姿
+T_camera_target_i：第 i 张图里，标定板在相机坐标系下的位姿
+```
+
+其中：
+
+- `T_base_gripper_i` 来自机械臂正运动学，或来自机械臂控制器反馈；
+- `T_camera_target_i` 来自 `solvePnP()`；
+- 标定板在采集过程中应固定不动；
+- 机械臂需要从多个不同位置和不同角度观察标定板。
+
+OpenCV 常用输入形式：
+
+```python
+R_cam2gripper, t_cam2gripper = cv2.calibrateHandEye(
+    R_gripper2base,
+    t_gripper2base,
+    R_target2cam,
+    t_target2cam,
+    method=cv2.CALIB_HAND_EYE_TSAI
+)
+```
+
+注意命名容易混乱，写代码时必须统一坐标方向。推荐在自己的文档和代码里明确保存：
+
+```text
+T_base_gripper
+T_camera_target
+T_gripper_camera
+```
+
+如果 OpenCV 返回的是 `R_cam2gripper, t_cam2gripper`，它表示相机到夹爪或夹爪到相机的方向要根据 OpenCV 当前接口说明和实际测试确认。做完后应通过实测点验证方向是否正确，不要只相信变量名。
+
+#### 11.8.4 得到内参和外参后怎么用
+
+实际抓取时，最常见的坐标链是：
+
+```text
+图像像素点 (u, v)
+-> 相机坐标系下的目标点 P_camera
+-> 机械臂末端坐标系下的目标点 P_gripper
+-> 机械臂基坐标系下的目标点 P_base
+-> 机械臂逆解得到关节角
+-> 下发关节角抓取
+```
+
+需要的变换：
+
+```text
+K                 相机内参
+dist_coeffs       畸变参数
+T_gripper_camera  手眼外参
+T_base_gripper    当前机械臂末端位姿
+```
+
+若已知目标在相机坐标系下的三维坐标 `P_camera`，则：
+
+```text
+P_gripper = T_gripper_camera * P_camera
+P_base    = T_base_gripper * P_gripper
+```
+
+等价写成一条链：
+
+```text
+P_base = T_base_gripper * T_gripper_camera * P_camera
+```
+
+这里的 `P_base` 就是机械臂基坐标系下的目标位置，后续送入机械臂逆运动学，例如 STM32 中的 `calculate_delta()`，得到关节角。
+
+#### 11.8.5 像素点如何变成 `P_camera`
+
+相机看到的是二维像素 `(u, v)`，它本身没有深度。因此仅靠一个像素点不能直接得到三维点，必须额外知道深度或平面约束。
+
+比赛中可用的简化条件：
+
+```text
+物料在转盘/桌面/色环平面上
+抓取平面的高度已知
+```
+
+这时可以把像素点反投影成一条相机射线，再求这条射线和目标平面的交点。
+
+概念流程：
+
+```text
+1. 用 dist_coeffs 去畸变像素点
+2. 用 K^-1 把像素点转成相机坐标系下的归一化射线
+3. 根据已知抓取平面求射线与平面的交点
+4. 得到 P_camera
+5. 用 P_base = T_base_gripper * T_gripper_camera * P_camera 转到机械臂基坐标系
+```
+
+如果暂时不想处理完整三维射线和平面方程，可以先用每个工位单独的 Homography：
+
+```text
+image(u,v) -> arm_plane(X,Y)
+```
+
+这种方法本质上把“内参、外参、平面约束”合在一个二维映射里，简单实用，但只适用于同一观察姿态和同一平面。
+
+#### 11.8.6 实际代码里建议保存的文件
+
+建议后续生成并保存：
+
+```text
+calibration/
+├── camera_intrinsics.yaml      # camera_matrix, dist_coeffs, image_size
+├── hand_eye.yaml               # T_gripper_camera
+├── workcell_homography.yaml    # 各工位的 H，可选
+└── calibration_samples.csv     # 每张图对应的关节角/末端位姿记录
+```
+
+实际运行时：
+
+```text
+1. 读取 camera_intrinsics.yaml 和 hand_eye.yaml
+2. 机械臂到观察位并记录/估算 T_base_gripper
+3. MaixCam 输出目标像素中心 cx, cy
+4. 通过平面约束或 Homography 计算目标坐标
+5. 转成机械臂基坐标系下的 P_base
+6. 调用逆运动学得到关节角
+7. 下发预抓取动作
+8. 停稳后重新拍照，用 dx, dy 做小范围微调
+```
