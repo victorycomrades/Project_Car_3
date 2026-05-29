@@ -1,37 +1,42 @@
 <launch>
-  <arg name="camera_port" default="/dev/ttyUSB0" />
-  <arg name="camera_baud" default="115200" />
-  <arg name="camera_startup_mode" default="QR" />
+  <arg name="use_openmv_serial" default="false" />
   <arg name="start_use_keyboard" default="true" />
   <arg name="start_gpio_path" default="" />
 
+  <!-- Map server -->
   <node name="map_server" pkg="map_server" type="map_server" args="$(find xrobot_arm)/maps/map.yaml" />
 
+  <!-- URDF model: provides base_footprint -> base_link -> imu_link TFs -->
   <include file="$(find xrobot_driver)/launch/xrobot_remote.launch" />
 
+  <!-- Static TF: map -> odom_combined (identity, robot starts at map origin) -->
   <node pkg="tf" type="static_transform_publisher" name="map_to_odom_combined_broadcaster"
         args="0 0 0 0 0 0 map odom_combined 100" />
 
+  <!-- Move base -->
   <include file="$(find xrobot_navigation)/launch/move_base.launch" />
 
+  <!-- Fused localization: odom + imu + visual odometry -->
   <include file="$(find xrobot_arm)/launch/robot_pose_ekf_fused.launch">
     <arg name="odom_topic" value="odom" />
     <arg name="imu_topic" value="imu/data_raw" />
     <arg name="vo_topic" value="vo" />
   </include>
 
+  <!-- Start button node: physical button or keyboard fallback -->
   <node pkg="xrobot_arm" type="start_button.py" name="start_button" output="screen">
     <param name="use_keyboard" value="$(arg start_use_keyboard)" />
     <param name="gpio_path" value="$(arg start_gpio_path)" />
   </node>
 
+  <!-- OpenMV bridge: receives QR code, object/ring detection from OpenMV camera via serial -->
   <node pkg="xrobot_cv" type="openmv_bridge.py" name="openmv_bridge" output="screen">
-    <param name="port" value="$(arg camera_port)" />
-    <param name="baud" value="$(arg camera_baud)" />
-    <param name="startup_mode" value="$(arg camera_startup_mode)" />
+    <param name="port" value="/dev/ttyACM0" />
+    <param name="baud" value="115200" />
   </node>
 
-  <node pkg="xrobot_arm" type="task_manager.py" name="task_manager" output="screen" />
-  <node pkg="xrobot_arm" type="nav_map_controller.py" name="nav_map_controller" output="screen" />
-  <node pkg="xrobot_arm" type="stm32_comm.py" name="stm32_comm" output="screen" />
+  <!-- Arm and task coordination -->
+  <node pkg="xrobot_arm" type="task_manager.py" name="task_manager" output="screen"/>
+  <node pkg="xrobot_arm" type="nav_map_controller.py" name="nav_map_controller" output="screen"/>
+  <node pkg="xrobot_arm" type="stm32_comm.py" name="stm32_comm" output="screen"/>
 </launch>
