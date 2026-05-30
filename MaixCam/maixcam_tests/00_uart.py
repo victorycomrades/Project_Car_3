@@ -3,7 +3,7 @@ from maix import app, time, uart
 
 UART_DEVICES = ("/dev/ttyGS0", "/dev/ttyS0")
 BAUDRATE = 115200
-MESSAGE = "hello from maixcam\n"
+# MESSAGE = "hello from maixcam\n"
 
 
 def open_uart():
