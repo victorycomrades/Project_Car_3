@@ -1,30 +1,31 @@
 <launch>
+  <!--
+    arm_servo_angle_reader.launch — SD/ZD 协议版
+    从 STM32 的 SD 传感器帧中提取舵机编码器值并发布为 JointState。
+    要求 STM32 固件已更新（SD 帧 42 字节，含 servo1~4_pos）。
+  -->
   <arg name="port" default="/dev/XCOM1" />
-  <arg name="baud" default="1000000" />
-  <arg name="protocol" default="sms_sts" />
+  <arg name="baud" default="115200" />
   <arg name="servo_ids" default="[1, 2, 3, 4]" />
   <arg name="joint_names" default="['joint1', 'joint2', 'joint3', 'wrist']" />
   <arg name="angle_mins" default="[-110, -110, -110, -110]" />
   <arg name="angle_maxs" default="[110, 110, 110, 110]" />
-  <arg name="rate" default="5.0" />
+  <arg name="encoder_mins" default="[0, 0, 0, 0]" />
+  <arg name="encoder_maxs" default="[4095, 4095, 4095, 4095]" />
+  <arg name="rate" default="20.0" />
   <arg name="angle_unit" default="degree" />
-  <arg name="fallback_pos_min" default="0" />
-  <arg name="fallback_pos_max" default="4095" />
-  <arg name="jetarm_path" default="$(env HOME)/xrobot2_ws/src/xrobot_arm/jetarm" />
 
   <node pkg="maixcam_uart_bridge" type="arm_servo_angle_reader_node.py"
         name="arm_servo_angle_reader" output="screen">
     <param name="port" value="$(arg port)" />
     <param name="baud" value="$(arg baud)" />
-    <param name="protocol" value="$(arg protocol)" />
     <rosparam param="servo_ids" subst_value="true">$(arg servo_ids)</rosparam>
     <rosparam param="joint_names" subst_value="true">$(arg joint_names)</rosparam>
     <rosparam param="angle_mins" subst_value="true">$(arg angle_mins)</rosparam>
     <rosparam param="angle_maxs" subst_value="true">$(arg angle_maxs)</rosparam>
+    <rosparam param="encoder_mins" subst_value="true">$(arg encoder_mins)</rosparam>
+    <rosparam param="encoder_maxs" subst_value="true">$(arg encoder_maxs)</rosparam>
     <param name="rate" value="$(arg rate)" />
     <param name="angle_unit" value="$(arg angle_unit)" />
-    <param name="fallback_pos_min" value="$(arg fallback_pos_min)" />
-    <param name="fallback_pos_max" value="$(arg fallback_pos_max)" />
-    <param name="jetarm_path" value="$(arg jetarm_path)" />
   </node>
 </launch>

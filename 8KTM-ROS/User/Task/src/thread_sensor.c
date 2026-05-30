@@ -115,6 +115,11 @@ static void SensorData_Send(void)
     sensor_data.DATE.angle_pitch = GyroData_Struct.stcAngle[1];
     sensor_data.DATE.angle_yaw = GyroData_Struct.stcAngle[2];
 		
+    /* 填充舵机编码器回传（4路） */
+    sensor_data.DATE.servo1_pos = (int16_t)ReadPos(1);
+    sensor_data.DATE.servo2_pos = (int16_t)ReadPos(2);
+    sensor_data.DATE.servo3_pos = (int16_t)ReadPos(3);
+    sensor_data.DATE.servo4_pos = (int16_t)ReadPos(4);
     
     /* 填充ZDT电机数据（4个） */
 //    sensor_data.DATE.motor1_pos = ZDT_GetMotorPosition(1);

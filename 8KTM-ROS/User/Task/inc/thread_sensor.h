@@ -11,7 +11,7 @@ extern "C" {
 /* 传感器数据结构体 */
 typedef union 
 {
-		#define UPLOAD_DATA_LEN 34
+		#define UPLOAD_DATA_LEN 42
 		uint8_t Buff[UPLOAD_DATA_LEN];
 		struct
 		{
@@ -40,6 +40,12 @@ typedef union
 			__packed int16_t angle_roll;       // 翻滚角
 			__packed int16_t angle_pitch;      // 俯仰角
 			__packed int16_t angle_yaw;        // 偏航角
+
+			// 舵机编码器回传（4路）
+			__packed int16_t servo1_pos;     // 舵机1编码器值（关节1）
+			__packed int16_t servo2_pos;     // 舵机2编码器值（关节2）
+			__packed int16_t servo3_pos;     // 舵机3编码器值（关节3）
+			__packed int16_t servo4_pos;     // 舵机4编码器值（夹爪）
 
 			__packed uint16_t crc;           // 校验和
 		} DATE;
