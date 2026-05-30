@@ -8,52 +8,46 @@ extern "C" {
 #include "mytype.h"
 /* Private macros ------------------------------------------------------------*/
 /* Private types -------------------------------------------------------------*/
-/* ´«¸ÐÆ÷Êý¾Ý½á¹¹Ìå */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½á¹¹ï¿½ï¿½ */
 typedef union 
 {
-		#define UPLOAD_DATA_LEN 42
+		#define UPLOAD_DATA_LEN 34
 		uint8_t Buff[UPLOAD_DATA_LEN];
 		struct
 		{
 			uint8_t header[2];      // Ö¡Í· "SD"
-			// Ñ­ÏßÌõÊý¾Ý£¨4¸ö£©
-			uint8_t line_sensor1;   // Ñ­ÏßÌõ1Êý¾Ý
-			uint8_t line_sensor2;   // Ñ­ÏßÌõ2Êý¾Ý
-			uint8_t line_sensor3;   // Ñ­ÏßÌõ3Êý¾Ý
-			uint8_t line_sensor4;   // Ñ­ÏßÌõ4Êý¾Ý
-			// ³¬Éù²¨Êý¾Ý£¨4¸ö£©
-			__packed uint16_t ultrasonic1;   // ³¬Éù²¨1¾àÀë
-			__packed uint16_t ultrasonic2;   // ³¬Éù²¨2¾àÀë
-			__packed uint16_t ultrasonic3;   // ³¬Éù²¨3¾àÀë
-			__packed uint16_t ultrasonic4;   // ³¬Éù²¨4¾àÀë
-			// ÍÓÂÝÒÇÊý¾Ý
-			__packed int16_t gyro_x;        // ÍÓÂÝÒÇXÖáÊý¾Ý
-			__packed int16_t gyro_y;        // ÍÓÂÝÒÇYÖáÊý¾Ý
-			__packed int16_t gyro_z;        // ÍÓÂÝÒÇZÖáÊý¾Ý
+			// Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½4ï¿½ï¿½ï¿½ï¿½
+			uint8_t line_sensor1;   // Ñ­ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½
+			uint8_t line_sensor2;   // Ñ­ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½
+			uint8_t line_sensor3;   // Ñ­ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½
+			uint8_t line_sensor4;   // Ñ­ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½4ï¿½ï¿½ï¿½ï¿½
+			__packed uint16_t ultrasonic1;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½
+			__packed uint16_t ultrasonic2;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2ï¿½ï¿½ï¿½ï¿½
+			__packed uint16_t ultrasonic3;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½
+			__packed uint16_t ultrasonic4;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½4ï¿½ï¿½ï¿½ï¿½
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t gyro_x;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t gyro_y;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t gyro_z;        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 			
-			__packed int16_t acc_x;         // ¼ÓËÙ¶ÈXÖáÊý¾Ý
-			__packed int16_t acc_y;         // ¼ÓËÙ¶ÈYÖáÊý¾Ý
-			__packed int16_t acc_z;         // ¼ÓËÙ¶ÈZÖáÊý¾Ý
+			__packed int16_t acc_x;         // ï¿½ï¿½ï¿½Ù¶ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t acc_y;         // ï¿½ï¿½ï¿½Ù¶ï¿½Yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t acc_z;         // ï¿½ï¿½ï¿½Ù¶ï¿½Zï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 			
-			__packed int16_t angle_roll;       // ·­¹ö½Ç
-			__packed int16_t angle_pitch;      // ¸©Ñö½Ç
-			__packed int16_t angle_yaw;        // Æ«º½½Ç
+			__packed int16_t angle_roll;       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t angle_pitch;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			__packed int16_t angle_yaw;        // Æ«ï¿½ï¿½ï¿½ï¿½
 
-			// ¶æ»ú±àÂëÆ÷»Ø´«£¨4Â·£©
-			__packed int16_t servo1_pos;     // ¶æ»ú1±àÂëÆ÷Öµ£¨¹Ø½Ú1£©
-			__packed int16_t servo2_pos;     // ¶æ»ú2±àÂëÆ÷Öµ£¨¹Ø½Ú2£©
-			__packed int16_t servo3_pos;     // ¶æ»ú3±àÂëÆ÷Öµ£¨¹Ø½Ú3£©
-			__packed int16_t servo4_pos;     // ¶æ»ú4±àÂëÆ÷Öµ£¨¼Ð×¦£©
-
-			__packed uint16_t crc;           // Ð£ÑéºÍ
+			__packed uint16_t crc;           // Ð£ï¿½ï¿½ï¿½
 		} DATE;
 		
-}SensorData_t;  //´«¸ÐÆ÷Êý¾Ý½á¹¹Ìå
+}SensorData_t;  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý½á¹¹ï¿½ï¿½
 
 
-/* ZDTµç»úÖ¸Áî½á¹¹Ìå */
+/* ZDTï¿½ï¿½ï¿½Ö¸ï¿½ï¿½á¹¹ï¿½ï¿½ */
 typedef union 
 {
 		#define DOWNLOAD_DATA_LEN 23
@@ -61,25 +55,25 @@ typedef union
 		struct
 		{
 				uint8_t header[2];      // Ö¡Í· "ZD"
-				__packed int16_t motor1_speed;   // µç»ú1Ä¿±êËÙ¶È
-				__packed int16_t motor2_speed;   // µç»ú2Ä¿±êËÙ¶È
-				__packed int16_t motor3_speed;   // µç»ú3Ä¿±êËÙ¶È
-				__packed int16_t motor4_speed;   // µç»ú4Ä¿±êËÙ¶È
+				__packed int16_t motor1_speed;   // ï¿½ï¿½ï¿½1Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½
+				__packed int16_t motor2_speed;   // ï¿½ï¿½ï¿½2Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½
+				__packed int16_t motor3_speed;   // ï¿½ï¿½ï¿½3Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½
+				__packed int16_t motor4_speed;   // ï¿½ï¿½ï¿½4Ä¿ï¿½ï¿½ï¿½Ù¶ï¿½
 			
-				/**»úÐµ±Û¿ØÖÆÊý¾Ý**/
-				__packed int16_t joint_angle[3];     // ¹Ø½Ú½Ç¶È
+				/**ï¿½ï¿½Ðµï¿½Û¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½**/
+				__packed int16_t joint_angle[3];     // ï¿½Ø½Ú½Ç¶ï¿½
 
-				__packed int16_t wrist_angle;      // ÊÖÍó½Ç¶È
-				__packed int16_t gripper_angle;    // ¼Ð×¥½Ç¶È
+				__packed int16_t wrist_angle;      // ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½
+				__packed int16_t gripper_angle;    // ï¿½ï¿½×¥ï¿½Ç¶ï¿½
 			
 			
-			  __packed uint8_t rest_flag;       //»úÐµ±Û¸´Î»°´Å¥
+			  __packed uint8_t rest_flag;       //ï¿½ï¿½Ðµï¿½Û¸ï¿½Î»ï¿½ï¿½Å¥
 			
 			
 
 			
 			
-				__packed uint16_t crc;           // Ð£ÑéºÍ
+				__packed uint16_t crc;           // Ð£ï¿½ï¿½ï¿½
 			
 		} DATE;
 		
@@ -93,6 +87,8 @@ typedef union
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
+extern char _lcd_text[64];
+extern uint8_t _lcd_ready;
 /* Exported functions --------------------------------------------------------*/
 int Task_Sensor_create(void);
 void sensor_uart_rx_callback(char* data, uint16_t len);

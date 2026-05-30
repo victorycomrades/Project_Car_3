@@ -1,0 +1,19 @@
+[Unit]
+Description=ROS Task Flow for xrobot_arm
+After=network.target
+
+[Service]
+Type=simple
+# 修改为你 Jetson Nano 上的实际用户名
+User=jetson
+Environment=DISPLAY=:0
+Environment=QT_QPA_PLATFORM=offscreen
+WorkingDirectory=/home/jetson/xrobot2_ws
+ExecStart=/bin/bash /home/jetson/xrobot2_ws/start_task_flow.sh
+Restart=on-failure
+RestartSec=5
+StandardOutput=inherit
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

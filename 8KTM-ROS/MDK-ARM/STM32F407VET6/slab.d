@@ -1,10 +1,11 @@
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/src/slab.c
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rthw.h
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtthread.h
-stm32f407vet6\slab.o: ../RT-Thread/rtconfig.h
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/finsh/finsh_config.h
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtdebug.h
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtdef.h
-stm32f407vet6\slab.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\stdarg.h
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtservice.h
-stm32f407vet6\slab.o: ../Middlewares/Third_Party/RealThread_RTOS/finsh/finsh_api.h
+stm32f407vet6/slab.o: \
+  ..\Middlewares\Third_Party\RealThread_RTOS\src\slab.c \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rthw.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtthread.h \
+  ..\RT-Thread\rtconfig.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\finsh\finsh_config.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtdebug.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtdef.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\stdarg.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtservice.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\finsh\finsh_api.h

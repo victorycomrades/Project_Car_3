@@ -1,53 +1,60 @@
 /* Includes ------------------------------------------------------------------*/
 #include "thread_sensor.h"
-/* ¿ª·¢°åÊý¾ÝÎÄ¼þ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ */
 #include "data.h"
 
-/* ¹¦ÄÜÄ£¿éÍ·ÎÄ¼þ */
+/* ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Í·ï¿½Ä¼ï¿½ */
 #include "bsp_hal_uartdma.h"
 #include "chassis_LineTracker.h"
 
 #include "fifo.h"
+#include "thread_comm.h"
 
-/* HAL¿âÍ·ÎÄ¼þ */
+/* HALï¿½ï¿½Í·ï¿½Ä¼ï¿½ */
 #include "stm32f4xx_hal_uart.h"
-/* ³¬Éù²¨Ä£¿éÍ·ÎÄ¼þ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½Í·ï¿½Ä¼ï¿½ */
 #include "SLAVE_UltrasonicRanging/SLAVE_UltrasonicRanging.h"
 
-/* ×Ö·û´®²Ù×÷Í·ÎÄ¼þ */
+/* ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½Ä¼ï¿½ */
 #include <string.h>
+#include <stdio.h>
 
-/*¶æ»ú*/
+/*ï¿½ï¿½ï¿½*/
 #include "Servo.h"
 #include "SMS_STS.h"
+#include "bsp_hal_st7789.h"
+#include "thread_rccu.h"
+#include "SCARA.h"
+#include <stdlib.h>
 
 
-/* Íâ²¿±äÁ¿ÉùÃ÷ */
+/* ï¿½â²¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 extern UartMixed_TypeDef muart2;
+extern RCCUStruct_TypeDef rccu_struct;
 
 /* Private macros ------------------------------------------------------------*/
-#define SENSOR_DATA_INTERVAL 40 // ´«¸ÐÆ÷Êý¾Ý·¢ËÍ¼ä¸ô(ms)
-#define UART_MIXED &muart2 // Ê¹ÓÃmuart3·¢ËÍÊý¾Ý
-#define RX_BUFFER_SIZE 128 // ½ÓÊÕ»º³åÇø´óÐ¡
+#define SENSOR_DATA_INTERVAL 40 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý·ï¿½ï¿½Í¼ï¿½ï¿½(ms)
+#define UART_MIXED &muart2 // Ê¹ï¿½ï¿½muart3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define RX_BUFFER_SIZE 128 // ï¿½ï¿½ï¿½Õ»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
 /* Private types -------------------------------------------------------------*/
 
 
 /* Private constants ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* ¶¨ÒåÏß³Ì¿ØÖÆ¿éÖ¸Õë */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì¿ï¿½ï¿½Æ¿ï¿½Ö¸ï¿½ï¿½ */
 rt_thread_t thread_SensorData = RT_NULL;
 rt_thread_t thread_ZDTCommand = RT_NULL;
 rt_thread_t thread_ARMCommand = RT_NULL;
-/* ½ÓÊÕ»º³åÇø */
+/* ï¿½ï¿½ï¿½Õ»ï¿½ï¿½ï¿½ï¿½ï¿½ */
 uint8_t rx_buffer[RX_BUFFER_SIZE];
 uint8_t rx_index = 0;
-/* µç»ú¿ØÖÆ±êÖ¾ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ±ï¿½Ö¾ */
 uint8_t motor_control_flag = 0;
 
 
 SensorData_t sensor_data;
 
-/* È«¾ÖZDTÃüÁî½á¹¹Ìå */
+/* È«ï¿½ï¿½ZDTï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½ */
 RC_Command_t g_rc_command;
 
 
@@ -71,17 +78,17 @@ static void SensorData_Send(void)
 {
 
     
-    /* Ìî³äÖ¡Í· */
+    /* ï¿½ï¿½ï¿½Ö¡Í· */
     sensor_data.DATE.header[0] = 'S';
     sensor_data.DATE.header[1] = 'D';
     
-    /* Ìî³äÑ­ÏßÌõÊý¾Ý£¨4¸ö£© */
+    /* ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½4ï¿½ï¿½ï¿½ï¿½ */
     sensor_data.DATE.line_sensor1 = Tracking_Device[0].Tracking_UploadData.DATE.SignalData;
     sensor_data.DATE.line_sensor2 = Tracking_Device[1].Tracking_UploadData.DATE.SignalData;
     sensor_data.DATE.line_sensor3 = Tracking_Device[2].Tracking_UploadData.DATE.SignalData;
     sensor_data.DATE.line_sensor4 = Tracking_Device[3].Tracking_UploadData.DATE.SignalData;
     
-    /* Ìî³ä³¬Éù²¨Êý¾Ý£¨4¸ö£© */
+    /* ï¿½ï¿½ä³¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½4ï¿½ï¿½ï¿½ï¿½ */
 #ifdef __SLAVE_UltrasonicRanging_H__
     sensor_data.DATE.ultrasonic1 = UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance1;
     sensor_data.DATE.ultrasonic2 = UltrasonicRanging_S.UltrasonicRanging_UploadData1.DATE.Distance2;
@@ -94,7 +101,7 @@ static void SensorData_Send(void)
     sensor_data.DATE.ultrasonic4 = 0;
 #endif
     
-    /* Ìî³äÍÓÂÝÒÇÊý¾Ý */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 //    sensor_data.DATE.gyro_x = GyroData_Struct.wx;
 //    sensor_data.DATE.gyro_y = GyroData_Struct.wy;
 //    sensor_data.DATE.gyro_z = GyroData_Struct.wz;
@@ -115,52 +122,47 @@ static void SensorData_Send(void)
     sensor_data.DATE.angle_pitch = GyroData_Struct.stcAngle[1];
     sensor_data.DATE.angle_yaw = GyroData_Struct.stcAngle[2];
 		
-    /* Ìî³ä¶æ»ú±àÂëÆ÷»Ø´«£¨4Â·£© */
-    sensor_data.DATE.servo1_pos = (int16_t)ReadPos(1);
-    sensor_data.DATE.servo2_pos = (int16_t)ReadPos(2);
-    sensor_data.DATE.servo3_pos = (int16_t)ReadPos(3);
-    sensor_data.DATE.servo4_pos = (int16_t)ReadPos(4);
     
-    /* Ìî³äZDTµç»úÊý¾Ý£¨4¸ö£© */
+    /* ï¿½ï¿½ï¿½ZDTï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½4ï¿½ï¿½ï¿½ï¿½ */
 //    sensor_data.DATE.motor1_pos = ZDT_GetMotorPosition(1);
 //    sensor_data.DATE.motor2_pos = ZDT_GetMotorPosition(2);
 //    sensor_data.DATE.motor3_pos = ZDT_GetMotorPosition(3);
 //    sensor_data.DATE.motor4_pos = ZDT_GetMotorPosition(4);
     
-    /* ¼ÆËãÐ£ÑéºÍ */
+    /* ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ */
     uint8_t *data_ptr = (uint8_t *)&sensor_data;
     sensor_data.DATE.crc = 0;
-    sensor_data.DATE.crc = crc16_ibm(data_ptr, sizeof(SensorData_t) - 2); // ¼õÈ¥CRC×Ö¶ÎµÄ2¸ö×Ö½Ú
+    sensor_data.DATE.crc = crc16_ibm(data_ptr, sizeof(SensorData_t) - 2); // ï¿½ï¿½È¥CRCï¿½Ö¶Îµï¿½2ï¿½ï¿½ï¿½Ö½ï¿½
     
-    /* ·¢ËÍÊý¾Ý */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
     Bsp_UARTMixed_TxTrigger(UART_MIXED, (char *)&sensor_data, sizeof(SensorData_t));
 }
 
 static uint16_t crc16_ibm(const uint8_t *data, int len) {
-    uint16_t crc = 0x0000; // ³õÊ¼Öµ
+    uint16_t crc = 0x0000; // ï¿½ï¿½Ê¼Öµ
     for (; len > 0; len--) {
         crc ^= (*data++) << 8;
         for (int i = 0; i < 8; i++) {
             if (crc & 0x8000)
-                crc = (crc << 1) ^ 0x8005; // ¶àÏîÊ½
+                crc = (crc << 1) ^ 0x8005; // ï¿½ï¿½ï¿½ï¿½Ê½
             else
                 crc <<= 1;
         }
     }
-    return crc; // ÎÞÊä³ö·´×ªºÍÒì»ò
+    return crc; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½
 }
 
 static void process_zdt_command(uint8_t *data)
 {
     RC_Command_t *cmd = (RC_Command_t *)data;
     
-    /* ÑéÖ¤Ð£ÑéºÍ */
-    uint16_t crc = crc16_ibm(data, sizeof(RC_Command_t) - 2); // ¼õÈ¥CRC×Ö¶ÎµÄ2¸ö×Ö½Ú
+    /* ï¿½ï¿½Ö¤Ð£ï¿½ï¿½ï¿½ */
+    uint16_t crc = crc16_ibm(data, sizeof(RC_Command_t) - 2); // ï¿½ï¿½È¥CRCï¿½Ö¶Îµï¿½2ï¿½ï¿½ï¿½Ö½ï¿½
     if (crc != cmd->DATE.crc) {
-        return; // Ð£ÑéºÍ´íÎó£¬¶ªÆúÊý¾Ý
+        return; // Ð£ï¿½ï¿½Í´ï¿½ï¿½ó£¬¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     }
 		
-		 /* ½«½ÓÊÕµ½µÄÊý¾Ý±£´æµ½È«¾Ö½á¹¹Ìå±äÁ¿ */
+		 /* ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý±ï¿½ï¿½æµ½È«ï¿½Ö½á¹¹ï¿½ï¿½ï¿½ï¿½ï¿½ */
     memcpy(&g_rc_command, data, sizeof(RC_Command_t));
     
 
@@ -169,28 +171,97 @@ static void process_zdt_command(uint8_t *data)
 
 static int32_t CFF_GetMotorPosition(uint8_t motor_id)
 {
-    // ÕâÀïÐèÒªÊµÏÖ¶ÁÈ¡µç»úÎ»ÖÃµÄ¹¦ÄÜ
-    // ÓÉÓÚÃ»ÓÐÖ±½ÓµÄº¯Êý£¬ÎÒÃÇ¿ÉÒÔÊ¹ÓÃZDT_ReadSysParamsº¯Êý
-    // Êµ¼ÊÓ¦ÓÃÖÐÐèÒª¸ù¾ÝÓ²¼þ½Ó¿ÚÊµÏÖÍ¨ÐÅ
-    return 0; // ÔÝÊ±·µ»Ø0£¬ÐèÒª¸ù¾ÝÊµ¼ÊÇé¿öÊµÏÖ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÊµï¿½Ö¶ï¿½È¡ï¿½ï¿½ï¿½Î»ï¿½ÃµÄ¹ï¿½ï¿½ï¿½
+    // ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ö±ï¿½ÓµÄºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ZDT_ReadSysParamsï¿½ï¿½ï¿½ï¿½
+    // Êµï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ó²ï¿½ï¿½ï¿½Ó¿ï¿½Êµï¿½ï¿½Í¨ï¿½ï¿½
+    return 0; // ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
 }
 
 
+char _lcd_text[64];
+static uint8_t _lcd_idx = 0;
+uint8_t _lcd_ready = 0;
+
 void sensor_uart_rx_callback(char* data, uint16_t len)
 {
-	
-	fifo_s_puts(&pc_fifo, (char*)data, len);
-	
+    uint16_t i;
+    static char _linebuf[128];
+    static uint8_t _li = 0;
+
+    fifo_s_puts(&pc_fifo, (char*)data, len);
+
+    for (i = 0; i < len; i++) {
+        char c = data[i];
+        if (c == '\n' || c == '\r') {
+            if (_li > 0) {
+                _linebuf[_li] = '\0';
+
+                /* ----- display command ----- */
+                if (_linebuf[0] == '{' && strstr(_linebuf, "\"cmd\":\"display\"") && strstr(_linebuf, "\"text\":\"")) {
+                    char *p = strstr(_linebuf, "\"text\":\"");
+                    p += 8;
+                    uint8_t j = 0;
+                    while (*p && *p != '\"' && j < sizeof(_lcd_text) - 1)
+                        _lcd_text[j++] = *p++;
+                    _lcd_text[j] = '\0';
+                    _lcd_ready = 1;
+                }
+
+                /* ----- nav command ----- */
+                if (_linebuf[0] == '{' && strstr(_linebuf, "\"cmd\":\"nav\"")) {
+                    char *px = strstr(_linebuf, "\"linear_x\":");
+                    char *py = strstr(_linebuf, "\"linear_y\":");
+                    char *pz = strstr(_linebuf, "\"angular_z\":");
+                    if (px && py && pz) {
+                        float vx = 0, vy = 0, vw = 0;
+                        sscanf(px, "\"linear_x\":%f", &vx);
+                        sscanf(py, "\"linear_y\":%f", &vy);
+                        sscanf(pz, "\"angular_z\":%f", &vw);
+                        rccu_struct.chassis_struct.vx = vx;
+                        rccu_struct.chassis_struct.vy = vy;
+                        rccu_struct.chassis_struct.vw = vw;
+                        if (rccu_struct.mode_run == CHASSIS_RELAX || rccu_struct.mode_run == CHASSIS_STOP) {
+                            rccu_struct.mode_order = CHASSIS_NORMAL;
+                        }
+                        Bsp_UARTMixed_TxTrigger(UART_MIXED, "NAVOK\n", 6);
+                    }
+                }
+
+                /* ----- arm command (absolute position) ----- */
+                // TODO: add SCARA.c to project build, then uncomment below
+                // if (_linebuf[0] == '{' && strstr(_linebuf, "\"cmd\":\"arm\"")) {
+                //     char *px = strstr(_linebuf, "\"x\":");
+                //     char *py = strstr(_linebuf, "\"y\":");
+                //     if (px && py) {
+                //         float cartesian[3];
+                //         uint16_t pwm1, pwm2, pwm3;
+                //         cartesian[0] = atof(px + 4);
+                //         cartesian[1] = atof(py + 4);
+                //         cartesian[2] = 0;
+                //         calculate_delta(cartesian);
+                //         Servo_AngleToPWM(SCARA_S.Angle, &pwm1, &pwm2, &pwm3);
+                //         WritePosEx(1, pwm1, 1000, 160);
+                //         WritePosEx(2, pwm2, 1000, 160);
+                //         WritePosEx(3, pwm3, 1000, 160);
+                //     }
+                // }
+
+                _li = 0;
+            }
+        } else if (_li < sizeof(_linebuf) - 1) {
+            _linebuf[_li++] = c;
+        }
+    }
 }
 
 static void sensor_uart_tx_callback(void)
 {
-    // ·¢ËÍÍê³É»Øµ÷£¬¿ÉÒÔÌí¼ÓÒ»Ð©´¦ÀíÂß¼­
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É»Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»Ð©ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½
 }
 
 
 /**
-  * @brief          µ¥×Ö½Ú½â°ü
+  * @brief          ï¿½ï¿½ï¿½Ö½Ú½ï¿½ï¿½
   * @param[in]      void
   * @retval         none
   */
@@ -203,14 +274,14 @@ void PC_unpack_fifo_data(void)
   {
 	  byte = fifo_s_get(&pc_fifo);
 		
-			  // Ìí¼Ó±ß½ç¼ì²é
+			  // ï¿½ï¿½ï¿½Ó±ß½ï¿½ï¿½ï¿½
         if (rx_index >= RX_BUFFER_SIZE) {
-            rx_index = 0; // ÖØÖÃ»º³åÇø
+            rx_index = 0; // ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½
         }
 		
         rx_buffer[rx_index++] = byte;
         
-				//Ñ°ÕÒÖ¡Í·
+				//Ñ°ï¿½ï¿½Ö¡Í·
 				if(rx_index >= 2)
 				{
 				  if(rx_buffer[rx_index-2] == 'Z' && rx_buffer[rx_index-1] == 'D')
@@ -222,13 +293,13 @@ void PC_unpack_fifo_data(void)
 				
 				}
 				
-        /* ¼ì²éÊÇ·ñÊÕµ½ÍêÕûµÄZDTÖ¸ÁîÖ¡ */
+        /* ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ZDTÖ¸ï¿½ï¿½Ö¡ */
         if (rx_index >= sizeof(RC_Command_t)) {
-            /* ¼ì²éÖ¡Í· */
+            /* ï¿½ï¿½ï¿½Ö¡Í· */
             if (rx_buffer[0] == 'Z' && rx_buffer[1] == 'D') {
                 process_zdt_command(rx_buffer);
             }
-            rx_index = 0; // ÖØÖÃ½ÓÊÕË÷Òý
+            rx_index = 0; // ï¿½ï¿½ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         }
 		
 	}	
@@ -351,55 +422,67 @@ static void Robot_arm_task(void *pvParameters)
 
 /* Exported functions --------------------------------------------------------*/
 void SensorData_task(void *pvParameters)
-{//´«¸ÐÆ÷Êý¾Ý·¢ËÍÈÎÎñ
+{
     while(1)
     {
-        /* ·¢ËÍ´«¸ÐÆ÷Êý¾Ý */
+        {
+            static int _cnt = 0;
+            if (++_cnt >= 10) {
+                _cnt = 0;
+                static char _wbuf[64];
+                int len = snprintf(_wbuf, sizeof(_wbuf),
+                    "{\"wheel\":{\"x\":%d,\"y\":%d,\"z\":%d,\"r\":%d}}\n",
+                    (int)pos_x, (int)pos_y, (int)zangle, Wheel_isReady);
+                if (len > 0 && len < (int)sizeof(_wbuf)) {
+                    Bsp_UARTMixed_TxTrigger(UART_MIXED, _wbuf, len);
+                    rt_thread_mdelay(5);
+                }
+            }
+        }
         SensorData_Send();
-        
-        /* ÑÓÊ± */
         rt_thread_mdelay(SENSOR_DATA_INTERVAL);
     }
 }
+
 int Task_Sensor_create(void)
 {
-    /* ³õÊ¼»¯muart3 */
+    /* ï¿½ï¿½Ê¼ï¿½ï¿½muart3 */
     //Bsp_UartMixed_Init(UART_MIXED, sensor_uart_rx_callback, sensor_uart_tx_callback);
     rt_kprintf("muart3 initialized!\n");
     
-    /* ´´½¨´«¸ÐÆ÷Êý¾Ý·¢ËÍÏß³Ì */
-    thread_SensorData = rt_thread_create( "SensorData",             /* Ïß³ÌÃû×Ö */
-                                        SensorData_task,          /* Ïß³ÌÈë¿Úº¯Êý */
-                                        RT_NULL,                 /* Ïß³ÌÈë¿Úº¯Êý²ÎÊý */
-                                        512,          		  /* Ïß³ÌÕ»´óÐ¡ */
-                                        15,                      /* Ïß³ÌµÄÓÅÏÈ¼¶ */
-                                        20);                     /* Ïß³ÌÊ±¼äÆ¬ */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý·ï¿½ï¿½ï¿½ï¿½ß³ï¿½ */
+    thread_SensorData = rt_thread_create( "SensorData",             /* ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½ */
+                                        SensorData_task,          /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ */
+                                        RT_NULL,                 /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+                                        1024,          		  /* ï¿½ß³ï¿½Õ»ï¿½ï¿½Ð¡ */
+                                        15,                      /* ï¿½ß³Ìµï¿½ï¿½ï¿½ï¿½È¼ï¿½ */
+                                        20);                     /* ï¿½ß³ï¿½Ê±ï¿½ï¿½Æ¬ */
     if(thread_SensorData != RT_NULL)
     {
         rt_thread_startup(thread_SensorData);
         rt_kprintf("thread_SensorData startup!\n");
     }
     
-    /* ´´½¨ZDTµç»úÖ¸Áî½ÓÊÕÏß³Ì */
-    thread_ZDTCommand = rt_thread_create( "CFFCommand",             /* Ïß³ÌÃû×Ö */
-                                         CFFCommand_task,          /* Ïß³ÌÈë¿Úº¯Êý */
-                                         RT_NULL,                 /* Ïß³ÌÈë¿Úº¯Êý²ÎÊý */
-                                         512,          		  /* Ïß³ÌÕ»´óÐ¡ */
-                                         14,                      /* Ïß³ÌµÄÓÅÏÈ¼¶£¨±È´«¸ÐÆ÷Êý¾ÝÏß³Ì¸ß£© */
-                                         20);                     /* Ïß³ÌÊ±¼äÆ¬ */
+    /* ï¿½ï¿½ï¿½ï¿½ZDTï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³ï¿½ */
+    thread_ZDTCommand = rt_thread_create( "CFFCommand",             /* ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½ */
+                                         CFFCommand_task,          /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ */
+                                         RT_NULL,                 /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+                                         512,          		  /* ï¿½ß³ï¿½Õ»ï¿½ï¿½Ð¡ */
+                                         14,                      /* ï¿½ß³Ìµï¿½ï¿½ï¿½ï¿½È¼ï¿½ï¿½ï¿½ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì¸ß£ï¿½ */
+                                         20);                     /* ï¿½ß³ï¿½Ê±ï¿½ï¿½Æ¬ */
     if(thread_ZDTCommand != RT_NULL)
     {
         rt_thread_startup(thread_ZDTCommand);
         rt_kprintf("thread_ZDTCommand startup!\n");
     }
 		
-    /* ´´½¨»úÐµ±Ûµç»úÖ¸Áî½ÓÊÕÏß³Ì */
-    thread_ARMCommand = rt_thread_create( "ARMCommand",             /* Ïß³ÌÃû×Ö */
-                                         Robot_arm_task,          /* Ïß³ÌÈë¿Úº¯Êý */
-                                         RT_NULL,                 /* Ïß³ÌÈë¿Úº¯Êý²ÎÊý */
-                                         512,          		  /* Ïß³ÌÕ»´óÐ¡ */
-                                         13,                      /* Ïß³ÌµÄÓÅÏÈ¼¶ */
-                                         20);                     /* Ïß³ÌÊ±¼äÆ¬ */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½Ûµï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³ï¿½ */
+    thread_ARMCommand = rt_thread_create( "ARMCommand",             /* ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½ */
+                                         Robot_arm_task,          /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ */
+                                         RT_NULL,                 /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+                                         512,          		  /* ï¿½ß³ï¿½Õ»ï¿½ï¿½Ð¡ */
+                                         13,                      /* ï¿½ß³Ìµï¿½ï¿½ï¿½ï¿½È¼ï¿½ */
+                                         20);                     /* ï¿½ß³ï¿½Ê±ï¿½ï¿½Æ¬ */
     if(thread_ARMCommand != RT_NULL)
     {
         rt_thread_startup(thread_ARMCommand);

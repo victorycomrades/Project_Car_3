@@ -1,8 +1,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "thread_user.h"
-/* ¿ª·¢°åÊý¾ÝÎÄ¼þ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ */
 #include "data.h"
-/* ÆäËûÈÎÎñÍ·ÎÄ¼þ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½Ä¼ï¿½ */
 #include "thread_rccu.h"
 #include "thread_gui.h"
 #include "thread_comm.h"
@@ -15,7 +15,7 @@ uint16_t Color_wait = WHITE;
 /* Private types -------------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* ¶¨ÒåÏß³Ì¿ØÖÆ¿éÖ¸Õë */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì¿ï¿½ï¿½Æ¿ï¿½Ö¸ï¿½ï¿½ */
 rt_thread_t thread_PathWrite = RT_NULL;
 /*                            */
 int32_t PositionXmm_Old;
@@ -32,12 +32,12 @@ static void Debug_Await(void)
 		My_mDelay(50);
 }
 
-static void Wait_Start(void)//µÈ´ý³õÊ¼»¯
+static void Wait_Start(void)//ï¿½È´ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 {
 	while(Wheel_isReady != 2)
 		My_mDelay(50);
 }
-/*×Ö·û´®Æ´½Ó*/
+/*ï¿½Ö·ï¿½ï¿½ï¿½Æ´ï¿½ï¿½*/
 void Stract(char strDestination[],char strSource[],int num)
 {
 	int i = 0,j = 0;
@@ -81,40 +81,40 @@ void Update_J(float New_J)
 	Stract(Update_j,New_set.data,4);
 	Bsp_UARTMixed_TxTrigger(&muart4, Update_j, 8);
 }
-static void SetCoordinateXY(float SET_LOCATION_X, float SET_LOCATION_Y)//ÉèÖÃ±àÂëÂÖ×ø±ê
+static void SetCoordinateXY(float SET_LOCATION_X, float SET_LOCATION_Y)//ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 		float SET_LOCATION_J;
-		SET_LOCATION_J = Read_Position_yaw();//¶ÁÈ¡³µµ±Ç°º½ÏòÖá
-		ChassisRELAX_set();//ÇÐ»»×ÔÓÉÄ£Ê½
+		SET_LOCATION_J = Read_Position_yaw();//ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		ChassisRELAX_set();//ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
 		Update_X(SET_LOCATION_X);
 		HAL_Delay(10);
 		Update_Y(SET_LOCATION_Y);
 		HAL_Delay(10);
 		Update_J(SET_LOCATION_J);
 		HAL_Delay(50);
-		ChassisCoord_Set(SET_LOCATION_X,SET_LOCATION_Y,0);//ÉèÖÃ×ø±ê
-		ChassisCoord_WaitStop();// µÈ´ý³µÉíÎÈ¶¨
+		ChassisCoord_Set(SET_LOCATION_X,SET_LOCATION_Y,0);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		ChassisCoord_WaitStop();// ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¶ï¿½
 		HAL_Delay(50);
 }
-static void ResetCoordinateXYJ(void)//±àÂëÂÖ×ø±êÇåÁã
+void ResetCoordinateXYJ(void)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
-		ChassisRELAX_set();//ÇÐ»»×ÔÓÉÄ£Ê½
+		ChassisRELAX_set();//ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
 		Bsp_UARTMixed_TxTrigger(&muart4, "ACT0", 4);
 		HAL_Delay(50);
-		ChassisCoord_Set(0,0,0);//ÇÐ»»×ø±êÄ£Ê½
+		ChassisCoord_Set(0,0,0);//ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
 }
 
-static void Identify_circle_Seq(void)//Ê¶±ðÔ²»·ÑÕÉ«Ë³Ðò£¬1Îªºì£¬2ÎªÂÌ£¬3ÎªÀ¶
+static void Identify_circle_Seq(void)//Ê¶ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«Ë³ï¿½ï¿½1Îªï¿½ì£¬2Îªï¿½Ì£ï¿½3Îªï¿½ï¿½
 {
 	uint8_t i;
 	bool_recognitionflag = 0;
 	CircleSequenceRecognitionModule_Start(&PCModule_t);
-	while( PCModule_t.RecognitionModuleSte != RM_succeed )//µÈ´ýÊý¾Ý
+	while( PCModule_t.RecognitionModuleSte != RM_succeed )//ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½
 	{
 		My_mDelay(50);
 	}
 	for(i=0; i<3; i++)  
-	{//Ê¶±ðµ½µÄ×Ö·û´®¶ÔÓ¦ÑÕÉ«
+	{//Ê¶ï¿½ðµ½µï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½É«
 		switch(Recognition_Buffer[i])
 		{
 			case '1':
@@ -135,13 +135,13 @@ static void Identify_circle_Seq(void)//Ê¶±ðÔ²»·ÑÕÉ«Ë³Ðò£¬1Îªºì£¬2ÎªÂÌ£¬3ÎªÀ¶
 
 
 /******************************************************************************/
-/* ÊÓ¾õÄ£¿é´®¿Ú³¯Ç°£¬182ÐÐÐ£×¼µÄxy·½ÏòÎªChassisSpeed_Set(-yout,-xout);        */
-/* ÊÓ¾õÄ£¿é´®¿Ú³¯ºó£¬182ÐÐÐ£×¼µÄxy·½ÏòÎªChassisSpeed_Set(yout,xout);        */
-/* ÊÓ¾õÄ£¿é´®¿Ú³¯×ó£¬182ÐÐÐ£×¼µÄxy·½ÏòÎªChassisSpeed_Set(xout,-yout);       */
-/* ÊÓ¾õÄ£¿é´®¿Ú³¯ÓÒ£¬182ÐÐÐ£×¼µÄxy·½ÏòÎªChassisSpeed_Set(-xout,yout);        */
+/* ï¿½Ó¾ï¿½Ä£ï¿½é´®ï¿½Ú³ï¿½Ç°ï¿½ï¿½182ï¿½ï¿½Ð£×¼ï¿½ï¿½xyï¿½ï¿½ï¿½ï¿½ÎªChassisSpeed_Set(-yout,-xout);        */
+/* ï¿½Ó¾ï¿½Ä£ï¿½é´®ï¿½Ú³ï¿½ï¿½ï¿½182ï¿½ï¿½Ð£×¼ï¿½ï¿½xyï¿½ï¿½ï¿½ï¿½ÎªChassisSpeed_Set(yout,xout);        */
+/* ï¿½Ó¾ï¿½Ä£ï¿½é´®ï¿½Ú³ï¿½ï¿½ï¿½182ï¿½ï¿½Ð£×¼ï¿½ï¿½xyï¿½ï¿½ï¿½ï¿½ÎªChassisSpeed_Set(xout,-yout);       */
+/* ï¿½Ó¾ï¿½Ä£ï¿½é´®ï¿½Ú³ï¿½ï¿½Ò£ï¿½182ï¿½ï¿½Ð£×¼ï¿½ï¿½xyï¿½ï¿½ï¿½ï¿½ÎªChassisSpeed_Set(-xout,yout);        */
 /******************************************************************************/
 
-static void IdentifyCircle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð°ÐÐÄ²¢µ÷ÕûÎ»ÖÃ
+static void IdentifyCircle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
 {
 	double y_err[2] = {0,0};
 	double x_err[2] = {0,0};
@@ -160,7 +160,7 @@ static void IdentifyCircle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð
 			CircleRecognitionModule_Start(&PCModule_t);
 		}
 		else if(PCModule_t.RecognitionModuleSte == RM_succeed)
-		{// »ý·ÖÆ«²î¼ÆËã£¬Ëã³öÒÆ¶¯ËÙ¶È
+		{// ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½Ù¶ï¿½
 			x_err[1] = x_err[0];
 			x_err[0] = SET_LOCATION_X - cartesian_loc.x;
 			xout = ( 1.5 * x_err[0] ) + ( 1.5f * ( x_err[0] - x_err[1] ) );
@@ -173,9 +173,9 @@ static void IdentifyCircle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð
 			if( yout > 50 ) yout = 50;
 		    else if( yout < -50 )yout = -50;
 			
-			if( ( ABS(y_err[0]) <= 2 ) && ( ABS(x_err[0]) <= 2 ) )// µ±xyÆ«²îÖµÐ¡ÓÚµÈÓÚ1Ê±£¬Í£Ö¹µ÷Õû
+			if( ( ABS(y_err[0]) <= 2 ) && ( ABS(x_err[0]) <= 2 ) )// ï¿½ï¿½xyÆ«ï¿½ï¿½ÖµÐ¡ï¿½Úµï¿½ï¿½ï¿½1Ê±ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½
 			{
-				ChassisSpeed_Set(0,0);// Í£Ö¹ÒÆ¶¯
+				ChassisSpeed_Set(0,0);// Í£Ö¹ï¿½Æ¶ï¿½
 				wait = 0;
 				break;
 			}
@@ -185,35 +185,35 @@ static void IdentifyCircle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð
 			}
 			PCModule_t.RecognitionModuleSte = RM_Identify;
 		}
-//		else if(wait_locXY > 50)//³¬Ê±Î´½ÓÊÕµ½×ø±ê£¬³µÁ¾ÔÝÍ£ÒÆ¶¯
+//		else if(wait_locXY > 50)//ï¿½ï¿½Ê±Î´ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Æ¶ï¿½
 //		{
-//			ChassisSpeed_Set(0,0);// Í£Ö¹ÒÆ¶¯
+//			ChassisSpeed_Set(0,0);// Í£Ö¹ï¿½Æ¶ï¿½
 //		}
-		else if(wait == 1500)//ÕûÌå³¬Ê±¹ý³¤×Ô¶¯Ìø³öÑ­»·½áÊøÈÎÎñ
+		else if(wait == 1500)//ï¿½ï¿½ï¿½å³¬Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			wait = 0;
-			ChassisSpeed_Set(0,0);// Í£Ö¹ÒÆ¶¯
+			ChassisSpeed_Set(0,0);// Í£Ö¹ï¿½Æ¶ï¿½
 			break;
 		}
 
 	}
-//	Rest_action();//¹éÎ»
+//	Rest_action();//ï¿½ï¿½Î»
 //	Rest_action_S2();
 	RecognitionModule_Stop(&PCModule_t);
 }
 /**
- * @brief  ¶þÎ¬ÂëÊ¶±ðÊ±¶¯×÷
- * @param  ¿Õ
- * @return ¿Õ
- * @explain ¸Ãº¯Êý´ò¿ª¶þÎ¬ÂëÊ¶±ðºó£¬ÔÚµÈ´ýbool_recognitionflag==1µÄ¹ý³ÌÖÐ£¬Ê¹Ð¡³µ×óÓÒÒÆ¶¯
-			ÒÔ´ËÔö¼ÓÊ¶±ð¸ÅÂÊ£¬ÓÃ»§¿ÉÒÔÍ¨¹ý¸ü¸ÄTime_WaitµÄÅÐ¶ÏÖµÀ´µ÷Õû×óÒÆÓÒÒÆµÄÊ±¼ä
-Ïà¹Øº¯Êý£º	XferExternalUart3Rx_Handler_New(½ÓÊÕ¶þÎ¬ÂëÄ£¿é´«À´µÄÊý¾Ý²¢½«bool_recognitionflagÖÃ1)
+ * @brief  ï¿½ï¿½Î¬ï¿½ï¿½Ê¶ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
+ * @param  ï¿½ï¿½
+ * @return ï¿½ï¿½
+ * @explain ï¿½Ãºï¿½ï¿½ï¿½ï¿½ò¿ª¶ï¿½Î¬ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½ÚµÈ´ï¿½bool_recognitionflag==1ï¿½Ä¹ï¿½ï¿½ï¿½ï¿½Ð£ï¿½Ê¹Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½
+			ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½Ê£ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Time_Waitï¿½ï¿½ï¿½Ð¶ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµï¿½Ê±ï¿½ï¿½
+ï¿½ï¿½Øºï¿½ï¿½ï¿½ï¿½ï¿½	XferExternalUart3Rx_Handler_New(ï¿½ï¿½ï¿½Õ¶ï¿½Î¬ï¿½ï¿½Ä£ï¿½é´«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý²ï¿½ï¿½ï¿½bool_recognitionflagï¿½ï¿½1)
  */
-void Identify_QRCode_New(void) //ÔÚÎ´Ê¶±ðµ½¶þÎ¬ÂëÊ±£¬½øÐÐ×óÓÒ°Ú¶¯
+void Identify_QRCode_New(void) //ï¿½ï¿½Î´Ê¶ï¿½ðµ½¶ï¿½Î¬ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò°Ú¶ï¿½
 {
-	RecognitionModule_Start(&RecognitionModule_t);//´ò¿ª¶þÎ¬ÂëÊ¶±ð
-	static uint32_t Time_Wait=0;	//¼ÆÊ±Á¿
-	while(bool_recognitionflag==0)  //XferExternalUart3Rx_Handler_New»á½«±êÖ¾Î»ÖÃ1£¬´ú±í½ÓÊÕµ½Êý¾Ý
+	RecognitionModule_Start(&RecognitionModule_t);//ï¿½ò¿ª¶ï¿½Î¬ï¿½ï¿½Ê¶ï¿½ï¿½
+	static uint32_t Time_Wait=0;	//ï¿½ï¿½Ê±ï¿½ï¿½
+	while(bool_recognitionflag==0)  //XferExternalUart3Rx_Handler_Newï¿½á½«ï¿½ï¿½Ö¾Î»ï¿½ï¿½1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½
 	{
 		ChassisSpeed_Set(30,0);
 		My_mDelay(2000);
@@ -225,17 +225,17 @@ void Identify_QRCode_New(void) //ÔÚÎ´Ê¶±ðµ½¶þÎ¬ÂëÊ±£¬½øÐÐ×óÓÒ°Ú¶¯
 		{
 			break;
 		}
-//		if(Time_Wait<1000)	ChassisSpeed_Set(-80,0);  //¿É¸ü¸ÄTime_WaitµÄÅÐ¶ÏÖµ£¬È·±£²»»áÅÜÌ«Ô¶£¬µ±Ç°ÖµÆ«´ó
+//		if(Time_Wait<1000)	ChassisSpeed_Set(-80,0);  //ï¿½É¸ï¿½ï¿½ï¿½Time_Waitï¿½ï¿½ï¿½Ð¶ï¿½Öµï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì«Ô¶ï¿½ï¿½ï¿½ï¿½Ç°ÖµÆ«ï¿½ï¿½
 //		else 				ChassisSpeed_Set(80,0);
 		My_mDelay(20);
 	}
 	
-	bool_colorsequenceflag = 1;//ÆÁÄ»ÏÔÊ¾±êÖ¾Î»
+	bool_colorsequenceflag = 1;//ï¿½ï¿½Ä»ï¿½ï¿½Ê¾ï¿½ï¿½Ö¾Î»
 }
 
 
 static void Identify_QRCode(void)
-{//Ê¶±ð¶þÎ¬Âë
+{//Ê¶ï¿½ï¿½ï¿½Î¬ï¿½ï¿½
 	uint8_t j,i;
 	int a = 0;
 	int b = 0;
@@ -244,7 +244,7 @@ static void Identify_QRCode(void)
 	Debug_Await();
 #endif
 	bool_recognitionflag = 0;
-#if 0     //1Ä£¿é  0ÉãÏñÍ·
+#if 0     //1Ä£ï¿½ï¿½  0ï¿½ï¿½ï¿½ï¿½Í·
 	RecognitionModule_Start(&RecognitionModule_t);
 	while( RecognitionModule_t.RecognitionModuleSte != RM_succeed )
 	{
@@ -287,7 +287,7 @@ static void Identify_QRCode(void)
 	for(j=0; j<2; j++)
 	{
 		for(i=0; i<3; i++)  
-		{//Ê¶±ðµ½µÄ×Ö·û´®¶ÔÓ¦ÑÕÉ«
+		{//Ê¶ï¿½ðµ½µï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½É«
 			switch(Recognition_Buffer[(4*j)+i])
 			{
 				case '1':
@@ -305,23 +305,23 @@ static void Identify_QRCode(void)
 	bool_recognitionflag = 0;
 	bool_colorsequenceflag = 1;
 }
-void Pause_ColorRecognition()//ÔÝÍ£ÑÕÉ«Ê¶±ð
+void Pause_ColorRecognition()//ï¿½ï¿½Í£ï¿½ï¿½É«Ê¶ï¿½ï¿½
 {
-		RecognitionModule_Stop(&PCModule_t);//Í£Ö¹ÊÓ¾õÖ÷»úÄ¿Ç°ËùÓÐÖ´ÐÐÈÎÎñ
+		RecognitionModule_Stop(&PCModule_t);//Í£Ö¹ï¿½Ó¾ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		bool_recognitionflag = 0;
 		CircleRecognitionModule_Start(&PCModule_t);
 }
-void Renew_ColorRecognition()//»Ö¸´ÑÕÉ«Ê¶±ð
+void Renew_ColorRecognition()//ï¿½Ö¸ï¿½ï¿½ï¿½É«Ê¶ï¿½ï¿½
 {
-		RecognitionModule_Stop(&PCModule_t);//Í£Ö¹ÊÓ¾õÖ÷»úÄ¿Ç°ËùÓÐÖ´ÐÐÈÎÎñ
+		RecognitionModule_Stop(&PCModule_t);//Í£Ö¹ï¿½Ó¾ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Ç°ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		bool_recognitionflag = 0;
 		ColorRecognitionModule_Start(&PCModule_t);
 }
 
-static void IdentifyColor_Get(uint8_t mode)//Ê¶±ðÑÕÉ«²¢×¥È¡£»µÚÒ»ÌËmode=0£¬µÚ¶þÌËmode=1
+static void IdentifyColor_Get(uint8_t mode)//Ê¶ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½×¥È¡ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½mode=0ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½mode=1
 {
 	#ifdef Disable_gyro_WhenArmMOVE
-		ChassisRELAX_set();//³µÉíÍ£ÓÃ¶¨Î»ÏµÍ³½ÃÕý
+		ChassisRELAX_set();//ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 	#endif
 	uint8_t i = 0;
 	if(mode > 1)
@@ -344,14 +344,14 @@ static void IdentifyColor_Get(uint8_t mode)//Ê¶±ðÑÕÉ«²¢×¥È¡£»µÚÒ»ÌËmode=0£¬µÚ¶þÌ
 				default:
 					break;
 			}
-			IdentifyColor_action();//Ê¶±ðÔ­ÁÏÇø¶¯×÷
-			Renew_ColorRecognition();//»Ö¸´ÑÕÉ«Ê¶±ð	
+			IdentifyColor_action();//Ê¶ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			Renew_ColorRecognition();//ï¿½Ö¸ï¿½ï¿½ï¿½É«Ê¶ï¿½ï¿½	
 			while(1)
 			{
 				if(CurrentMaterialColor == ColorSequence[mode][i])
-				{//ÑÕÉ«Ê¶±ð³É¹¦ÅÐ¶ÏÑÕÉ«
-					//½øÐÐ×¥È¡
-					Pause_ColorRecognition();//ÔÝÍ£ÑÕÉ«Ê¶±ð
+				{//ï¿½ï¿½É«Ê¶ï¿½ï¿½É¹ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½É«
+					//ï¿½ï¿½ï¿½ï¿½×¥È¡
+					Pause_ColorRecognition();//ï¿½ï¿½Í£ï¿½ï¿½É«Ê¶ï¿½ï¿½
 	//				if (mode ==0)
 	//				{
 	//					Put_A();
@@ -375,7 +375,7 @@ static void IdentifyColor_Get(uint8_t mode)//Ê¶±ðÑÕÉ«²¢×¥È¡£»µÚÒ»ÌËmode=0£¬µÚ¶þÌ
 	Rest_action_S2();
 	RecognitionModule_Stop(&PCModule_t);
 }
-static void Circle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð°ÐÐÄ²¢µ÷ÕûÎ»ÖÃ
+static void Circle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
 {
 	double y_err[2] = {0,0};
 	double x_err[2] = {0,0};
@@ -394,7 +394,7 @@ static void Circle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð°ÐÐÄ²¢µ÷
 			CircleRecognitionModule_Start(&PCModule_t);
 		}
 		else if(PCModule_t.RecognitionModuleSte == RM_succeed)
-		{// »ý·ÖÆ«²î¼ÆËã£¬Ëã³öÒÆ¶¯ËÙ¶È
+		{// ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Æ¶ï¿½ï¿½Ù¶ï¿½
 			x_err[1] = x_err[0];
 			x_err[0] = SET_LOCATION_X - cartesian_loc.x;
 			xout = ( 1.5 * x_err[0] ) + ( 1.5f * ( x_err[0] - x_err[1] ) );
@@ -407,9 +407,9 @@ static void Circle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð°ÐÐÄ²¢µ÷
 			if( yout > 50 ) yout = 50;
 		    else if( yout < -50 )yout = -50;
 			
-			if( ( ABS(y_err[0]) <= 10 ) && ( ABS(x_err[0]) <= 10 ) )// µ±xyÆ«²îÖµÐ¡ÓÚµÈÓÚ1Ê±£¬Í£Ö¹µ÷Õû
+			if( ( ABS(y_err[0]) <= 10 ) && ( ABS(x_err[0]) <= 10 ) )// ï¿½ï¿½xyÆ«ï¿½ï¿½ÖµÐ¡ï¿½Úµï¿½ï¿½ï¿½1Ê±ï¿½ï¿½Í£Ö¹ï¿½ï¿½ï¿½ï¿½
 			{
-				ChassisSpeed_Set(0,0);// Í£Ö¹ÒÆ¶¯
+				ChassisSpeed_Set(0,0);// Í£Ö¹ï¿½Æ¶ï¿½
 				wait = 0;
 				break;
 			}
@@ -419,24 +419,24 @@ static void Circle_Get(float SET_LOCATION_X, float SET_LOCATION_Y)//Ê¶±ð°ÐÐÄ²¢µ÷
 			}
 			PCModule_t.RecognitionModuleSte = RM_Identify;
 		}
-//		else if(wait_locXY > 50)//³¬Ê±Î´½ÓÊÕµ½×ø±ê£¬³µÁ¾ÔÝÍ£ÒÆ¶¯
+//		else if(wait_locXY > 50)//ï¿½ï¿½Ê±Î´ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½Æ¶ï¿½
 //		{
-//			ChassisSpeed_Set(0,0);// Í£Ö¹ÒÆ¶¯
+//			ChassisSpeed_Set(0,0);// Í£Ö¹ï¿½Æ¶ï¿½
 //		}
-		else if(wait == 1500)//ÕûÌå³¬Ê±¹ý³¤×Ô¶¯Ìø³öÑ­»·½áÊøÈÎÎñ
+		else if(wait == 1500)//ï¿½ï¿½ï¿½å³¬Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			wait = 0;
-			ChassisSpeed_Set(0,0);// Í£Ö¹ÒÆ¶¯
+			ChassisSpeed_Set(0,0);// Í£Ö¹ï¿½Æ¶ï¿½
 			break;
 		}
 
 	}
 	RecognitionModule_Stop(&PCModule_t);
 }
-static void Color_Get(uint8_t mode)//Ê¶±ðÑÕÉ«²¢×¥È¡£»µÚÒ»ÌËmode=0£¬µÚ¶þÌËmode=1
+static void Color_Get(uint8_t mode)//Ê¶ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½×¥È¡ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½mode=0ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½mode=1
 {
 	#ifdef Disable_gyro_WhenArmMOVE
-		ChassisRELAX_set();//³µÉíÍ£ÓÃ¶¨Î»ÏµÍ³½ÃÕý
+		ChassisRELAX_set();//ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 	#endif
 	uint8_t i = 0;
 	if(mode > 1)
@@ -472,13 +472,13 @@ static void Color_Get(uint8_t mode)//Ê¶±ðÑÕÉ«²¢×¥È¡£»µÚÒ»ÌËmode=0£¬µÚ¶þÌËmode=1
 	}
 }
 
-void RoughingArea_PutGet(uint8_t ColorSequenceNum)//´Ö¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«¹Ì¶¨ºìÂÌÀ¶Çé¿ö£©
+void RoughingArea_PutGet(uint8_t ColorSequenceNum)//ï¿½Ö¼Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	#ifdef Disable_gyro_WhenArmMOVE
-		ChassisRELAX_set();//³µÉíÍ£ÓÃ¶¨Î»ÏµÍ³½ÃÕý
+		ChassisRELAX_set();//ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 	#endif
 	uint8_t i;
-		for(i=0; i<3; i++) //ÌáÈ¡ÒªÈ¡ÑÕÉ«Ë÷ÒýºÅ
+		for(i=0; i<3; i++) //ï¿½ï¿½È¡ÒªÈ¡ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED){
 			Get_1();
@@ -494,7 +494,7 @@ void RoughingArea_PutGet(uint8_t ColorSequenceNum)//´Ö¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«¹Ì
 			}
 		}
 		//Debug_Await();
-		for(i=0; i<3; i++) //ÌáÈ¡ÒªÈ¡ÑÕÉ«Ë÷ÒýºÅ
+		for(i=0; i<3; i++) //ï¿½ï¿½È¡ÒªÈ¡ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED){
 			Get_Red();
@@ -512,14 +512,14 @@ void RoughingArea_PutGet(uint8_t ColorSequenceNum)//´Ö¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«¹Ì
 	Rest_action_S2();
 }
 
-void FashioningArea_Put(uint8_t ColorSequenceNum)//¾«¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«¹Ì¶¨ºìÂÌÀ¶Çé¿ö£©
+void FashioningArea_Put(uint8_t ColorSequenceNum)//ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«ï¿½Ì¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	#ifdef Disable_gyro_WhenArmMOVE
-		ChassisRELAX_set();//³µÉíÍ£ÓÃ¶¨Î»ÏµÍ³½ÃÕý
+		ChassisRELAX_set();//ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 	#endif
 	uint8_t i;
 	if(ColorSequenceNum == 0){
-		for(i=0; i<3; i++) //·ÅÏÂ²ãÎïÁÏ
+		for(i=0; i<3; i++) //ï¿½ï¿½ï¿½Â²ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED){
 			Get_1();
@@ -536,7 +536,7 @@ void FashioningArea_Put(uint8_t ColorSequenceNum)//¾«¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«¹Ì¶
 		}
 	}
 	if(ColorSequenceNum == 1){
-		for(i=0; i<3; i++) //Âë¶âÎïÁÏ
+		for(i=0; i<3; i++) //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED){
 			Get_1();
@@ -556,10 +556,10 @@ void FashioningArea_Put(uint8_t ColorSequenceNum)//¾«¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«¹Ì¶
 }
 
 
-void RoughingArea_PutGet_R(uint8_t ColorSequenceNum)//´Ö¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«Ëæ»úÇé¿ö£©
+void RoughingArea_PutGet_R(uint8_t ColorSequenceNum)//ï¿½Ö¼Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	#ifdef Disable_gyro_WhenArmMOVE
-		ChassisRELAX_set();//³µÉíÍ£ÓÃ¶¨Î»ÏµÍ³½ÃÕý
+		ChassisRELAX_set();//ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 	#endif
 	uint8_t i;
 		for (i = 0; i < 3; i++) 
@@ -567,124 +567,124 @@ void RoughingArea_PutGet_R(uint8_t ColorSequenceNum)//´Ö¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«
 			if(ColorSequence[ColorSequenceNum][i] == RED) {
 					Get_1();
 					if (CircleSequence[0] == RED) {
-							Put_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Put_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == RED) {
-							Put_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Put_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == RED) {
-							Put_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Put_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 			}
 			else if (ColorSequence[ColorSequenceNum][i] == GREEN) {
 					Get_2();
 					if (CircleSequence[0] == GREEN) {
-							Put_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Put_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == GREEN) {
-							Put_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Put_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == GREEN) {
-							Put_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Put_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 			}
 			else if (ColorSequence[ColorSequenceNum][i] == BLUE) {
 					Get_3();
 					if (CircleSequence[0] == BLUE) {
-							Put_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Put_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == BLUE) {
-							Put_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Put_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == BLUE) {
-							Put_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Put_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 			}
 		}
 		//Debug_Await();
-		for(i=0; i<3; i++) //ÌáÈ¡ÒªÈ¡ÑÕÉ«Ë÷ÒýºÅ
+		for(i=0; i<3; i++) //ï¿½ï¿½È¡ÒªÈ¡ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED){
 				if (CircleSequence[0] == RED) {
-						Get_Blue(); // ÄÃ´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+						Get_Blue(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 				}
 				else if (CircleSequence[1] == RED) {
-						Get_Green(); // ÄÃ´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+						Get_Green(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 				}
 				else if (CircleSequence[2] == RED) {
-						Get_Red(); // ÄÃ´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+						Get_Red(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 				}
 				Put_1();
 			}
 			else if(ColorSequence[ColorSequenceNum][i] == GREEN){
 				if (CircleSequence[0] == GREEN) {
-						Get_Blue(); // ÄÃ´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+						Get_Blue(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 				}
 				else if (CircleSequence[1] == GREEN) {
-						Get_Green(); // ÄÃ´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+						Get_Green(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 				}
 				else if (CircleSequence[2] == GREEN) {
-						Get_Red(); // ÄÃ´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+						Get_Red(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 				}
 				Put_2();
 			}
 			else if(ColorSequence[ColorSequenceNum][i] == BLUE){
 				if (CircleSequence[0] == BLUE) {
-						Get_Blue(); // ÄÃ´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+						Get_Blue(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 				}
 				else if (CircleSequence[1] == BLUE) {
-						Get_Green(); // ÄÃ´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+						Get_Green(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 				}
 				else if (CircleSequence[2] == BLUE) {
-						Get_Red(); // ÄÃ´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+						Get_Red(); // ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 				}
 				Put_3();
 			}
 		}
 }
-void FashioningArea_Put_R(uint8_t ColorSequenceNum)//¾«¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«Ëæ»úÇé¿ö£©
+void FashioningArea_Put_R(uint8_t ColorSequenceNum)//ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï£ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 {
 	#ifdef Disable_gyro_WhenArmMOVE
-		ChassisRELAX_set();//³µÉíÍ£ÓÃ¶¨Î»ÏµÍ³½ÃÕý
+		ChassisRELAX_set();//ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½
 	#endif
 	uint8_t i;
 	if(ColorSequenceNum == 0){
-		for (i = 0; i < 3; i++)//·ÅÏÂ²ãÎïÁÏ
+		for (i = 0; i < 3; i++)//ï¿½ï¿½ï¿½Â²ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED) {
 					
 					if (CircleSequence[0] == RED) {
-							Get_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Get_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == RED) {
-							Get_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Get_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == RED) {
-							Get_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Get_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 					Put_1();
 			}
 			else if (ColorSequence[ColorSequenceNum][i] == GREEN) {
 					if (CircleSequence[0] == GREEN) {
-							Get_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Get_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == GREEN) {
-							Get_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Get_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == GREEN) {
-							Get_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Get_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 					Put_2();
 			}
 			else if (ColorSequence[ColorSequenceNum][i] == BLUE) {
 					if (CircleSequence[0] == BLUE) {
-							Get_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Get_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == BLUE) {
-							Get_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Get_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == BLUE) {
-							Get_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Get_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 					Put_3();
 			}
@@ -692,53 +692,53 @@ void FashioningArea_Put_R(uint8_t ColorSequenceNum)//¾«¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«Ë
 	}
 
 	if(ColorSequenceNum == 1){
-		for (i = 0; i < 3; i++)//Âë¶âÎïÁÏ
+		for (i = 0; i < 3; i++)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		{
 			if(ColorSequence[ColorSequenceNum][i] == RED) {
 					
 					if (CircleSequence[0] == RED) {
-							Get_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
-//							Get_Blue_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Get_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
+//							Get_Blue_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == RED) {
-							Get_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
-//							Get_Green_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Get_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
+//							Get_Green_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == RED) {
-							Get_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
-//							Get_Red_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Get_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
+//							Get_Red_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 					Put_1();
 			}
 			else if (ColorSequence[ColorSequenceNum][i] == GREEN) {
 
 					if (CircleSequence[0] == GREEN) {
-							Get_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
-//							Get_Blue_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Get_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
+//							Get_Blue_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == GREEN) {
-							Get_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
-//							Get_Green_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Get_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
+//							Get_Green_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == GREEN) {
-							Get_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
-//							Get_Red_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Get_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
+//							Get_Red_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 					Put_2();
 			}
 			else if (ColorSequence[ColorSequenceNum][i] == BLUE) {
 
 					if (CircleSequence[0] == BLUE) {
-							Get_Blue(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
-//							Get_Blue_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚÒ»¸öÈ¦
+							Get_Blue(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
+//							Get_Blue_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[1] == BLUE) {
-							Get_Green(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
-//							Get_Green_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚ¶þ¸öÈ¦
+							Get_Green(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
+//							Get_Green_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½ï¿½È¦
 					}
 					else if (CircleSequence[2] == BLUE) {
-							Get_Red(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
-//							Get_Red_Stacking(); // ·Å´Ó×óÍùÓÒÊýµÚÈý¸öÈ¦
+							Get_Red(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
+//							Get_Red_Stacking(); // ï¿½Å´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¦
 					}
 					Put_3();
 			}
@@ -752,51 +752,51 @@ void FashioningArea_Put_R(uint8_t ColorSequenceNum)//¾«¼Ó¹¤Çø·ÅÖÃÎïÁÏ£¨Ô²»·ÑÕÉ«Ë
 
 /* Exported functions --------------------------------------------------------*/
 void PathWrite_task(void *pvParameters)
-{//Â·¾¢¹æ»®ÈÎÎñ
+{//Â·ï¿½ï¿½ï¿½æ»®ï¿½ï¿½ï¿½ï¿½
 	RecognitionModule_Stop(&PCModule_t);
-	Rest_action_S2();//¶æ»ú³õÊ¼Ì§Æð
+	Rest_action_S2();//ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Ì§ï¿½ï¿½
 	ChassisModle_Set(2);
 	while(1)
 	{
 	#if 1
-		Debug_Await();// µÈ´ý°´¼ü±»°´ÏÂ
-		Wait_Start();// µÈ´ý±àÂëÂÖ³õÊ¼»¯Íê³É	
-		//================³ö·¢É¨ÂëÇø================
+		Debug_Await();// ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		Wait_Start();// ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½	
+		//================ï¿½ï¿½ï¿½ï¿½É¨ï¿½ï¿½ï¿½ï¿½================
 		ChassisCoord_Set(0,-190, 0); 
 		ChassisCoord_WaitStop();
 		ChassisCoord_Set(-750,-190, 0);
-		QR_action();//¶þÎ¬ÂëÊ¶±ð¶¯×÷
+		QR_action();//ï¿½ï¿½Î¬ï¿½ï¿½Ê¶ï¿½ï¿½ï¿½ï¿½
 		ChassisCoord_WaitStop();
-		//===============Ê¶±ð¶þÎ¬Âë===============
+		//===============Ê¶ï¿½ï¿½ï¿½Î¬ï¿½ï¿½===============
 		Identify_QRCode();
-		//==============Ç°½øµ½Ô­ÁÏÇø==============
-		//===============×ßÖÐ¼ä===============
+		//==============Ç°ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½==============
+		//===============ï¿½ï¿½ï¿½Ð¼ï¿½===============
 		ChassisCoord_Set(-1080, -180, 180);
 		ChassisCoord_WaitStop();
-		//=============ÒÆ¶¯µ½´Ö¼Ó¹¤Çø=============¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú´Ö
+		//=============ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½Ö¼Ó¹ï¿½ï¿½ï¿½=============ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		ChassisCoord_Set(-1080, -1905, 0);
 		IdentifyCircle_action();
 		ChassisCoord_WaitStop();
 		
-		IdentifyCircle_Get(100,150);//ÊÓ¾õÊ¶±ðÔ²ÐÄ
-		Get_color();    //Í¬Ê±ÄÜ¹»¿´É«»·»òÎïÁÏË³ÐòµÄ»úÐµ±Û¶¯×÷½Ç¶È
-		Identify_circle_Seq();//Ê¶±ðÔ²»·ÑÕÉ«Ë³Ðò
-		FashioningArea_Put_R(0); //É«»·Ëæ»ú´Ö¼Ó¹¤¶¯×÷
-		SetCoordinateXY(0,0);//ÖØÖÃ¶¨Î»ÏµÍ³µÄ×ø±êÏµ£¬Ïû³ý´ËÇ°Îó²î
+		IdentifyCircle_Get(100,150);//ï¿½Ó¾ï¿½Ê¶ï¿½ï¿½Ô²ï¿½ï¿½
+		Get_color();    //Í¬Ê±ï¿½Ü¹ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½Ä»ï¿½Ðµï¿½Û¶ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½
+		Identify_circle_Seq();//Ê¶ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«Ë³ï¿½ï¿½
+		FashioningArea_Put_R(0); //É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½
+		SetCoordinateXY(0,0);//ï¿½ï¿½ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½
 		Rest_action_S2();
 		
 		ChassisCoord_Set(-850, 0, -90);
 		ChassisCoord_WaitStop();
-		//=============ÒÆ¶¯µ½¾«¼Ó¹¤Çø=============¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¾«
+		//=============ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½=============ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		ChassisCoord_Set(-848, 828, 0);
 		ChassisCoord_WaitStop();
 		IdentifyCircle_action();
 		
 		
-		IdentifyCircle_Get(100,150);//ÊÓ¾õÊ¶±ðÔ²ÐÄ
-		Rest_action_S2();//¸´Î»¶¯×÷
+		IdentifyCircle_Get(100,150);//ï¿½Ó¾ï¿½Ê¶ï¿½ï¿½Ô²ï¿½ï¿½
+		Rest_action_S2();//ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
 		RoughingArea_PutGet(0);
-		SetCoordinateXY(0,0);//ÖØÖÃ¶¨Î»ÏµÍ³µÄ×ø±êÏµ£¬Ïû³ý´ËÇ°Îó²î
+		SetCoordinateXY(0,0);//ï¿½ï¿½ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½
 		
 		ChassisCoord_Set(0, 885, -90);
 		ChassisCoord_WaitStop();
@@ -806,37 +806,37 @@ void PathWrite_task(void *pvParameters)
 		IdentifyColor_action();
 		Color_Get(0);
 		
-		IdentifyColor_Get(0);//½«ÎïÁÏ·Åµ½×ªÅÌ
+		IdentifyColor_Get(0);//ï¿½ï¿½ï¿½ï¿½ï¿½Ï·Åµï¿½×ªï¿½ï¿½
 		
-		SetCoordinateXY(-1530,-180);//ÖØÖÃ¶¨Î»ÏµÍ³×ªÅÌÎ»ÖÃ
+		SetCoordinateXY(-1530,-180);//ï¿½ï¿½ï¿½Ã¶ï¿½Î»ÏµÍ³×ªï¿½ï¿½Î»ï¿½ï¿½
 		
-		//===============×ßÖÐ¼ä===============
+		//===============ï¿½ï¿½ï¿½Ð¼ï¿½===============
 		ChassisCoord_Set(-1090, -180, 180);
 		ChassisCoord_WaitStop();	
 		
-		//=============ÒÆ¶¯µ½´Ö¼Ó¹¤Çø=============¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú´Ö
+		//=============ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½Ö¼Ó¹ï¿½ï¿½ï¿½=============ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		ChassisCoord_Set(-1090, -1905, 0);
 		IdentifyCircle_action();
 		ChassisCoord_WaitStop();
 		
-		IdentifyCircle_Get(100,150);//ÊÓ¾õÊ¶±ðÔ²ÐÄ
-		Get_color();    //Í¬Ê±ÄÜ¹»¿´É«»·»òÎïÁÏË³ÐòµÄ»úÐµ±Û¶¯×÷½Ç¶È
-		Identify_circle_Seq();//Ê¶±ðÔ²»·ÑÕÉ«Ë³Ðò
-		FashioningArea_Put_R(1); //É«»·Ëæ»ú´Ö¼Ó¹¤¶¯×÷
-		SetCoordinateXY(0,0);//ÖØÖÃ¶¨Î»ÏµÍ³µÄ×ø±êÏµ£¬Ïû³ý´ËÇ°Îó²î
+		IdentifyCircle_Get(100,150);//ï¿½Ó¾ï¿½Ê¶ï¿½ï¿½Ô²ï¿½ï¿½
+		Get_color();    //Í¬Ê±ï¿½Ü¹ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½Ä»ï¿½Ðµï¿½Û¶ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½
+		Identify_circle_Seq();//Ê¶ï¿½ï¿½Ô²ï¿½ï¿½ï¿½ï¿½É«Ë³ï¿½ï¿½
+		FashioningArea_Put_R(1); //É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½
+		SetCoordinateXY(0,0);//ï¿½ï¿½ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½
 		Rest_action_S2();
 		
 		ChassisCoord_Set(-850, 0, -90);
 		ChassisCoord_WaitStop();
-		//=============ÒÆ¶¯µ½¾«¼Ó¹¤Çø=============¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¡ú¾«
+		//=============ï¿½Æ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½=============ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		ChassisCoord_Set(-850, 828, 0);
 		IdentifyCircle_action();
 		ChassisCoord_WaitStop();
 		
-		IdentifyCircle_Get(100,150);//ÊÓ¾õÊ¶±ðÔ²ÐÄ
-		Rest_action_S2();//¸´Î»¶¯×÷
+		IdentifyCircle_Get(100,150);//ï¿½Ó¾ï¿½Ê¶ï¿½ï¿½Ô²ï¿½ï¿½
+		Rest_action_S2();//ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
 		RoughingArea_PutGet(1);
-		SetCoordinateXY(0,0);//ÖØÖÃ¶¨Î»ÏµÍ³µÄ×ø±êÏµ£¬Ïû³ý´ËÇ°Îó²î
+		SetCoordinateXY(0,0);//ï¿½ï¿½ï¿½Ã¶ï¿½Î»ÏµÍ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½
 		
 		ChassisCoord_Set(0, 885, -90);
 		ChassisCoord_WaitStop();
@@ -846,9 +846,9 @@ void PathWrite_task(void *pvParameters)
 		IdentifyColor_action();
 		Color_Get(0);
 		
-		IdentifyColor_Get(1);//½«ÎïÁÏ·Åµ½×ªÅÌ
-		SetCoordinateXY(-1530,-180);//ÖØÖÃ¶¨Î»ÏµÍ³×ªÅÌÎ»ÖÃ
-//===============»Ø³ö·¢Çø===============
+		IdentifyColor_Get(1);//ï¿½ï¿½ï¿½ï¿½ï¿½Ï·Åµï¿½×ªï¿½ï¿½
+		SetCoordinateXY(-1530,-180);//ï¿½ï¿½ï¿½Ã¶ï¿½Î»ÏµÍ³×ªï¿½ï¿½Î»ï¿½ï¿½
+//===============ï¿½Ø³ï¿½ï¿½ï¿½ï¿½ï¿½===============
 		ChassisCoord_Set(-720,-190, 0);
 		ChassisCoord_WaitStop();
 		ChassisCoord_Set(0,-190, 0); 
@@ -861,10 +861,10 @@ void PathWrite_task(void *pvParameters)
 
 		
 	#else
-		Debug_Await();// µÈ´ý°´¼ü±»°´ÏÂ
-		Wait_Start();// µÈ´ý±àÂëÂÖ³õÊ¼»¯Íê³É
+		Debug_Await();// ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		Wait_Start();// ï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½
 		
-		IdentifyColor_Get(0);//½«ÎïÁÏ·Åµ½×ªÅÌ
+		IdentifyColor_Get(0);//ï¿½ï¿½ï¿½ï¿½ï¿½Ï·Åµï¿½×ªï¿½ï¿½
 		
 		
 		
@@ -872,17 +872,17 @@ void PathWrite_task(void *pvParameters)
 	
 		#endif
 		//*/
-		Debug_Await();// µÈ´ýÏÂÒ»´ÎÈÎÎñ
+		Debug_Await();// ï¿½È´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	}
 }
 int Task_User_create(void)
 {
-	thread_PathWrite = rt_thread_create( "PathWrite",             /* Ïß³ÌÃû×Ö */
-								         PathWrite_task,          /* Ïß³ÌÈë¿Úº¯Êý */
-								         RT_NULL,                 /* Ïß³ÌÈë¿Úº¯Êý²ÎÊý */
-								         1024,          		  /* Ïß³ÌÕ»´óÐ¡ */
-								         10,                      /* Ïß³ÌµÄÓÅÏÈ¼¶ */
-								         20);                     /* Ïß³ÌÊ±¼äÆ¬ */
+	thread_PathWrite = rt_thread_create( "PathWrite",             /* ï¿½ß³ï¿½ï¿½ï¿½ï¿½ï¿½ */
+								         PathWrite_task,          /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ */
+								         RT_NULL,                 /* ï¿½ß³ï¿½ï¿½ï¿½Úºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
+								         1024,          		  /* ï¿½ß³ï¿½Õ»ï¿½ï¿½Ð¡ */
+								         10,                      /* ï¿½ß³Ìµï¿½ï¿½ï¿½ï¿½È¼ï¿½ */
+								         20);                     /* ï¿½ß³ï¿½Ê±ï¿½ï¿½Æ¬ */
 	if(thread_PathWrite != RT_NULL)
 	{
 		rt_thread_startup(thread_PathWrite);

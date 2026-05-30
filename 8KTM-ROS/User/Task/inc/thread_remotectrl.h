@@ -1,5 +1,5 @@
-#ifndef __THREAD_GUI_H_
-#define __THREAD_GUI_H_
+#ifndef __THREAD_REMOTECTRL_H_
+#define __THREAD_REMOTECTRL_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,6 +24,6 @@ extern "C" {
 #endif /* __cplusplus */
 
 
-#endif /* __THREAD_GUI_H_ */
+#endif /* __THREAD_REMOTECTRL_H_ */
 
 

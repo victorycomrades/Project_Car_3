@@ -62,7 +62,8 @@ void MX_USART3_UART_Init(void);
 void MX_USART6_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void Uart_Send(uint8_t *buf, uint16_t len);
+int16_t Uart_Read(uint8_t *buf, uint16_t len, uint32_t timeout);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

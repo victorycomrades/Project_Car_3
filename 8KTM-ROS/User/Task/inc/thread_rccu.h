@@ -7,6 +7,9 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "mytype.h"
 #include "chassis_LineTracker.h"
+#include "Location_Tracker.h"
+#include "chassis_function.h"
+#include "pid.h"
 /* Private macros ------------------------------------------------------------*/
 /* Private types -------------------------------------------------------------*/
 /* Private constants ---------------------------------------------------------*/
@@ -14,8 +17,39 @@ extern "C" {
 /* Private functions ---------------------------------------------------------*/
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+typedef enum
+{
+    CHASSIS_RELAX = 0,
+    CHASSIS_STOP,
+    CHASSIS_NORMAL,
+    CHASSIS_COORD,
+    CHASSIS_TRACKING,
+} ChassisCtrlMode_TypeDef;
+
+typedef struct
+{
+    ChassisCtrlMode_TypeDef mode_order;
+    ChassisCtrlMode_TypeDef mode_run;
+    float Gyro_YawAngle_zero;
+    float Gyro_YawAngle_Calc;
+    float Gyro_YawAngle_Chassis;
+    float Gyro_YawAngle_Coord;
+    ChassisHandle_TypeDef chassis_struct;
+    struct {
+        float goal_yaw, goal_x, goal_y;
+        float soft_yaw, soft_x, soft_y;
+        Location_Tracker_Typedef Yaw_Tracker_Struct;
+        Location_Tracker_Typedef X_Tracker_Struct;
+        Location_Tracker_Typedef Y_Tracker_Struct;
+    } ChassisCoord_CtrlStruct;
+    pid_t YawAngle_pid;
+    pid_t LocationX_pid;
+    pid_t LocationY_pid;
+    volatile float *qGyro_YawAngle_New;
+} RCCUStruct_TypeDef;
 /* Exported constants --------------------------------------------------------*/
 /* Exported variables --------------------------------------------------------*/
+extern RCCUStruct_TypeDef rccu_struct;
 /* Exported functions --------------------------------------------------------*/
 void ChassisCoord_Set(float _x_diff, float _y_diff, float _yaw_diff);
 void ChassisCoord_WaitStop(void);

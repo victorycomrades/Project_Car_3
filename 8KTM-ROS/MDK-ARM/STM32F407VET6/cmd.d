@@ -1,17 +1,18 @@
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/components/finsh/cmd.c
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rthw.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtthread.h
-stm32f407vet6\cmd.o: ../RT-Thread/rtconfig.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/finsh/finsh_config.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtdebug.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtdef.h
-stm32f407vet6\cmd.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\stdarg.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/include/rtservice.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/finsh/finsh_api.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/components/finsh/finsh.h
-stm32f407vet6\cmd.o: ../Middlewares/Third_Party/RealThread_RTOS/components/finsh/finsh_api.h
-stm32f407vet6\cmd.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\stdio.h
-stm32f407vet6\cmd.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\ctype.h
-stm32f407vet6\cmd.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\stdlib.h
-stm32f407vet6\cmd.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\stdint.h
-stm32f407vet6\cmd.o: D:\Keil\Keil5\ARM\ARMCC\Bin\..\include\string.h
+stm32f407vet6/cmd.o: \
+  ..\Middlewares\Third_Party\RealThread_RTOS\components\finsh\cmd.c \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rthw.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtthread.h \
+  ..\RT-Thread\rtconfig.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\finsh\finsh_config.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtdebug.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtdef.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\stdarg.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\include\rtservice.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\finsh\finsh_api.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\components\finsh\finsh.h \
+  ..\Middlewares\Third_Party\RealThread_RTOS\components\finsh\finsh_api.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\stdio.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\ctype.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\stdlib.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\stdint.h \
+  C:\Keil_v5\ARM\ARMCLANG\include\string.h

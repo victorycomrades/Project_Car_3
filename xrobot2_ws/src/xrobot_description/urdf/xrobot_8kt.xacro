@@ -24,7 +24,7 @@
 
     <link name="base_footprint"/>
 
-    <xacro:xrobot_chassis  base_mass="4.0" base_x_size="0.0" base_y_size="0.0" base_z_size="0.0">
+    <xacro:xrobot_chassis  base_mass="4.0" base_x_size="0.34" base_y_size="0.30" base_z_size="0.20">
     </xacro:xrobot_chassis>
 
     <xacro:if value="$(arg use_lidar)">

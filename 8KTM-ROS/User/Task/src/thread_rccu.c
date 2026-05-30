@@ -1,4 +1,4 @@
-/* Includes ------------------------------------------------------------------*/
+ï»¿/* Includes ------------------------------------------------------------------*/
 #include "thread_comm.h"
 #include "thread_rccu.h"
 #include "bsp.h"
@@ -8,71 +8,33 @@
 #include "pid.h"
 #include "Location_Tracker.h"
 #include "thread_user.h"
+#include <stdio.h>
 /* Private macros ------------------------------------------------------------*/
-//¿ØÖÆÆµÂÊ_hz
+//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é¢‘é”Ÿæ–¤æ‹·_hz
 #define CONTROL_FREQ_HZ			  (100)
-//YAW PID²ÎÊı
+//YAW PIDé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 #define De_YAW_KP                 5.0f
 #define De_YAW_KI                 0.0f
 #define De_YAW_KD                 5.0f
-//X PID²ÎÊı
+//X PIDé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 #define De_LOCX_KP                2.8f
 #define De_LOCX_KI                0.0f
 #define De_LOCX_KD                5.0f
-//Y PID²ÎÊı
+//Y PIDé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 #define De_LOCY_KP                2.8f
 #define De_LOCY_KI                0.0f
 #define De_LOCY_KD                5.0f
 /* Private types -------------------------------------------------------------*/
-typedef enum
-{
-	CHASSIS_RELAX = 0,          //°²È«Ä£Ê½
-	CHASSIS_STOP,               //µ×ÅÌÍ£Ö¹
-	CHASSIS_NORMAL,             //µ×ÅÌÕı³£Ä£Ê½£¨´øÍÓÂİÒÇ£©
-	CHASSIS_COORD,              //µ×ÅÌ×ø±êÄ£Ê½
-	CHASSIS_TRACKING,           //µ×ÅÌÑ­¼£Ä£Ê½
-} ChassisCtrlMode_TypeDef;
-typedef struct
-{
-	//Ó²Ä¿±êÎ»ÖÃºÍËÙ¶È
-	float		goal_yaw;
-	float		goal_x;
-	float		goal_y;
-	//ÈíÄ¿±êÎ»ÖÃºÍËÙ¶È
-	float		soft_yaw;
-	float		soft_x;
-	float		soft_y;
-	
-	Location_Tracker_Typedef Yaw_Tracker_Struct;
-	Location_Tracker_Typedef X_Tracker_Struct;
-	Location_Tracker_Typedef Y_Tracker_Struct;
-}ChassisCoord_CtrlTypeDef;
-typedef struct
-{
-	ChassisCtrlMode_TypeDef mode_order;
-	ChassisCtrlMode_TypeDef mode_run;
-	float Gyro_YawAngle_zero;
-	float Gyro_YawAngle_Calc;
-	float Gyro_YawAngle_Chassis;
-	float Gyro_YawAngle_Coord;
-	ChassisHandle_TypeDef chassis_struct;
-	ChassisCoord_CtrlTypeDef ChassisCoord_CtrlStruct;
-	pid_t YawAngle_pid;
-	pid_t LocationX_pid;
-	pid_t LocationY_pid;
-	volatile float *qGyro_YawAngle_New;
-}RCCUStruct_TypeDef;
 /* Private constants ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 float GyroYawAngleCalc = 0;
-/* ¶¨ÒåÏß³Ì¿ØÖÆ¿éÖ¸Õë */
+/* é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿç«­ç¨‹åŒ¡æ‹·é”Ÿç‹¡åŒ¡æ‹·æŒ‡é”Ÿæ–¤æ‹· */
 rt_thread_t thread_rccu = RT_NULL;
-/* µ×ÅÌ¿ØÖÆ */
+/* é”Ÿæ–¤æ‹·é”Ÿæ•™åŒ¡æ‹·é”Ÿæ–¤æ‹· */
 RCCUStruct_TypeDef rccu_struct;
 /* Private functions ---------------------------------------------------------*/
 /**
-  * @brief  µç»úÄ£Ê½ÅäÖÃ
-  * @param  _mode
+  * @brief  é”Ÿæ–¤æ‹·é”Ÿä¾¥ï¼ªæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?  * @param  _mode
   * @retval NULL
 **/
 static void rccu_setmode( RCCUStruct_TypeDef *rccu_handle, ChassisCtrlMode_TypeDef _mode )
@@ -84,7 +46,7 @@ static float Read_RealYawAngle( RCCUStruct_TypeDef* rccu_handle )
 	return (*rccu_handle->qGyro_YawAngle_New);
 }
 static float Read_GyroYawAngleCalc( RCCUStruct_TypeDef* rccu_handle )
-{//¶ÁÈ¡ÍÓÂİÒÇÖµ
+{//é”Ÿæ–¤æ‹·å–é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·å€¼
 	#ifdef HWT101_gyro
 		float YawAngleCalc;
 		YawAngleCalc = Read_RealYawAngle(rccu_handle) - rccu_handle->Gyro_YawAngle_zero;
@@ -95,11 +57,11 @@ static float Read_GyroYawAngleCalc( RCCUStruct_TypeDef* rccu_handle )
 		GyroYawAngleCalc = YawAngleCalc;
 		return YawAngleCalc;
 	#else
-		return zangle;//±àÂëÂÖÍÓÂİÒÇyawÖá
+		return zangle;//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·yawé”Ÿæ–¤æ‹·
 	#endif
 }
 static void rccu_chassisctrl( RCCUStruct_TypeDef* rccu_handle )
-{//Ğ¡³µµ×ÅÌ¿ØÖÆ
+{//å°é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ•™åŒ¡æ‹·é”Ÿæ–¤æ‹·
 	int16_t speed1buff;
     int16_t speed2buff;
     int16_t speed3buff;
@@ -112,7 +74,7 @@ static void rccu_chassisctrl( RCCUStruct_TypeDef* rccu_handle )
 	
 	if(rccu_struct.chassis_struct.Chassis_CtrlFunc != 0)
 		rccu_struct.chassis_struct.Chassis_CtrlFunc(&rccu_struct.chassis_struct);
-    /**************************µ×ÅÌËÙ¶ÈÊä³öµ½µç»úÉÏ*******************************/	
+    /**************************é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”ŸåŠ«è®¹æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·*******************************/	
 	speed1buff = rccu_handle->chassis_struct.wheel_rpm[0];
 	speed2buff = rccu_handle->chassis_struct.wheel_rpm[1];
 	speed3buff = rccu_handle->chassis_struct.wheel_rpm[2];
@@ -129,8 +91,6 @@ static void rccu_chassisctrl( RCCUStruct_TypeDef* rccu_handle )
 #if (DCMOTOR4_DIR == REV)
 	 speed4buff = -speed4buff;
 #endif
-	if(lcd_page == 1)
-	{
     #if 1
 		SLAVE_DCMotorMiniwatt_SpeedSet(&DCMotorMiniwatt1_S,speed1buff);
 		SLAVE_DCMotorMiniwatt_SpeedSet(&DCMotorMiniwatt2_S,speed2buff);
@@ -142,8 +102,7 @@ static void rccu_chassisctrl( RCCUStruct_TypeDef* rccu_handle )
 		SLAVE_DCMotorMiniwatt_Digital_SpeedSet(&DCMotorMiniwatt3_S,speed3buff);
 		SLAVE_DCMotorMiniwatt_Digital_SpeedSet(&DCMotorMiniwatt4_S,speed4buff);
 		#endif
-	}
-	/**************************µç»úÊı¾İ¼ÆËãµ½µ×ÅÌÉÏ*******************************/
+	/**************************é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·èé”Ÿæ–¤æ‹·æ„•æ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?******************************/
 	rccu_handle->chassis_struct.yaw_gyro_angle = rccu_handle->Gyro_YawAngle_Calc;
 	speed1buff = SLAVE_DCMotorMiniwatt_SpeedRead(&DCMotorMiniwatt1_S);
 	speed2buff = SLAVE_DCMotorMiniwatt_SpeedRead(&DCMotorMiniwatt2_S);
@@ -180,7 +139,7 @@ static void rccu_chassisctrl( RCCUStruct_TypeDef* rccu_handle )
 															   distance14buff );
 }
 static void rccu_chassisctrl_normalmode( RCCUStruct_TypeDef* rccu_handle )
-{//ÓĞÍÓÂİÒÇµÄÕı³£Ä£Ê½(ÎŞ¼ÆËãÀï³Ì)
+{//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿè§’ç¢‰æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ¨¡å¼(é”Ÿç«ç¡·æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?
 	float YawAngle_Diff;
 
 	YawAngle_Diff = rccu_handle->Gyro_YawAngle_Calc - rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
@@ -195,7 +154,7 @@ static void rccu_chassisctrl_normalmode( RCCUStruct_TypeDef* rccu_handle )
 	rccu_handle->chassis_struct.vy = sRemoteCtrl_Info.sPosition.vy;
 }
 static void rccu_chassisctrl_coordmode( RCCUStruct_TypeDef* rccu_handle )
-{//ÓĞÍÓÂİÒÇµÄ×ø±êÄ£Ê½(¼ÆËãÀï³Ì)
+{//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿè§’ç¢‰æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ¨¡å¼(é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?
 	float YawAngle_Diff;
 
 	YawAngle_Diff = rccu_handle->Gyro_YawAngle_Calc - rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
@@ -213,7 +172,7 @@ static void rccu_chassisctrl_coordmode( RCCUStruct_TypeDef* rccu_handle )
 	                                                                        rccu_handle->chassis_struct.position.position_y_mm, \
 	                                                                        rccu_handle->ChassisCoord_CtrlStruct.soft_y );
 	
-	/************************************·½Ïò¼ÆËã********************************************/
+	/************************************é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?*******************************************/
 	YawAngle_Diff = rccu_handle->Gyro_YawAngle_Coord - rccu_handle->Gyro_YawAngle_Calc;  
 	if(YawAngle_Diff < 0)
 		YawAngle_Diff += 360;
@@ -229,8 +188,7 @@ static void rccu_chassisctrl_trackingmode( RCCUStruct_TypeDef* rccu_handle )
 	rccu_handle->chassis_struct.vw = rccu_handle->ChassisCoord_CtrlStruct.soft_yaw;
 }
 /**
-  * @brief  µç»ú¿ØÖÆ³õÊ¼»¯
-  * @param  NULL
+  * @brief  é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·ç¥é”Ÿç»ç¡·æ‹·é”Ÿ?  * @param  NULL
   * @retval NULL
 **/
 static void rccu_init( RCCUStruct_TypeDef* rccu_handle )
@@ -238,7 +196,7 @@ static void rccu_init( RCCUStruct_TypeDef* rccu_handle )
 	memset(rccu_handle, 0, sizeof(RCCUStruct_TypeDef));
 	rccu_setmode( rccu_handle, CHASSIS_RELAX );
 //#######################################################################################################
-//ÊµÊ±»ñÈ¡ÍÓÂİÒÇ½Ç¶È
+//å®æ—¶é”Ÿæ–¤æ‹·å–é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿè§’è§’è®¹æ‹·
 	#ifdef HWT101_gyro
 		rccu_handle->qGyro_YawAngle_New = &GyroData_Struct.Yaw;
 	#else 
@@ -247,11 +205,9 @@ static void rccu_init( RCCUStruct_TypeDef* rccu_handle )
 //#######################################################################################################
 	Chassis_Init( &rccu_handle->chassis_struct,
 	              FOUR_DRIVE_McNamara,
-								RC_CHASSIS_MAX_SPEED_X,   //×î´óXÖáËÙ¶È
-								RC_CHASSIS_MAX_SPEED_Y,   //×î´óYÖáËÙ¶È
-								RC_CHASSIS_MAX_SPEED_R,   //×î´óÖĞĞÄĞı×ªÖáËÙ¶È
-								MAX_WHEEL_RPM );          //ÂÖ×Ó×î´óËÙ¶È
-	//YAW PID
+								RC_CHASSIS_MAX_SPEED_X,   //é”Ÿæ–¤æ‹·é”Ÿçµé”Ÿæ–¤æ‹·é”ŸåŠ«è®¹æ‹·
+								RC_CHASSIS_MAX_SPEED_Y,   //é”Ÿæ–¤æ‹·é”Ÿçµé”Ÿæ–¤æ‹·é”ŸåŠ«è®¹æ‹·
+								RC_CHASSIS_MAX_SPEED_R, MAX_WHEEL_RPM );
 	PID_struct_init(&rccu_handle->YawAngle_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_R, 50.0f,De_YAW_KP, De_YAW_KI, De_YAW_KD);
 	rccu_handle->YawAngle_pid.output_deadband = 0;
 	//X PID
@@ -260,34 +216,34 @@ static void rccu_init( RCCUStruct_TypeDef* rccu_handle )
 	//Y PID
 	PID_struct_init(&rccu_handle->LocationY_pid, POSITION_PID, RC_CHASSIS_MAX_SPEED_Y, 50.0f,De_LOCY_KP, De_LOCY_KI, De_LOCY_KD);
 	rccu_handle->LocationY_pid.output_deadband = 0;
-	//YAW ¸úËæÆ÷
+	//YAW é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 	Location_Tracker_Init( &rccu_handle->ChassisCoord_CtrlStruct.Yaw_Tracker_Struct,
 													CONTROL_FREQ_HZ,//CtrlFreqHZ
 													RC_CHASSIS_MAX_SPEED_R,//max_speed
-													RC_CHASSIS_MAX_SPEED_R*2,//up_acc	Ä¬ÈÏ*2/3
-													RC_CHASSIS_MAX_SPEED_R*2,//down_acc Ä¬ÈÏ*2/3
+													RC_CHASSIS_MAX_SPEED_R*2,//up_acc	é»˜é”Ÿæ–¤æ‹·*2/3
+													RC_CHASSIS_MAX_SPEED_R*2,//down_acc é»˜é”Ÿæ–¤æ‹·*2/3
 													RC_CHASSIS_MAX_SPEED_R );//speed_locking_stop
-	//X ¸úËæÆ÷
+	//X é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 	Location_Tracker_Init( &rccu_handle->ChassisCoord_CtrlStruct.X_Tracker_Struct,
 													CONTROL_FREQ_HZ,//CtrlFreqHZ
 													RC_CHASSIS_MAX_SPEED_X,//max_speed
-													RC_CHASSIS_MAX_SPEED_X/1,//up_acc	Ä¬ÈÏ/4
-													RC_CHASSIS_MAX_SPEED_X/1,//down_acc Ä¬ÈÏ/4
+													RC_CHASSIS_MAX_SPEED_X/1,//up_acc	é»˜é”Ÿæ–¤æ‹·/4
+													RC_CHASSIS_MAX_SPEED_X/1,//down_acc é»˜é”Ÿæ–¤æ‹·/4
 													RC_CHASSIS_MAX_SPEED_X );//speed_locking_stop
-	//Y ¸úËæÆ÷
+	//Y é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 	Location_Tracker_Init( &rccu_handle->ChassisCoord_CtrlStruct.Y_Tracker_Struct,
 													CONTROL_FREQ_HZ,
 													RC_CHASSIS_MAX_SPEED_Y,//max_speed
-													RC_CHASSIS_MAX_SPEED_Y/1,//up_acc	Ä¬ÈÏ/4
-													RC_CHASSIS_MAX_SPEED_Y/1,//down_acc Ä¬ÈÏ/4
+													RC_CHASSIS_MAX_SPEED_Y/1,//up_acc	é»˜é”Ÿæ–¤æ‹·/4
+													RC_CHASSIS_MAX_SPEED_Y/1,//down_acc é»˜é”Ÿæ–¤æ‹·/4
 													RC_CHASSIS_MAX_SPEED_Y );//speed_locking_stop
-	//Ñ­¼£¸úËæÆ÷				   
+	//å¾ªé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·				   
 	LineTracker_Init( 1, 
 	                  CONTROL_FREQ_HZ, 
-	                  &Tracking_Device1.Tracking_UploadData.DATE.SignalData,   //Ç°
-                      &Tracking_Device2.Tracking_UploadData.DATE.SignalData,   //×ó
-					  &Tracking_Device3.Tracking_UploadData.DATE.SignalData,   //ºó
-					  &Tracking_Device4.Tracking_UploadData.DATE.SignalData ); //ÓÒ
+	                  &Tracking_Device1.Tracking_UploadData.DATE.SignalData,   //å‰
+                      &Tracking_Device2.Tracking_UploadData.DATE.SignalData,   //é”Ÿæ–¤æ‹·
+					  &Tracking_Device3.Tracking_UploadData.DATE.SignalData,   //é”Ÿæ–¤æ‹·
+					  &Tracking_Device4.Tracking_UploadData.DATE.SignalData ); //é”Ÿæ–¤æ‹·
 }
 /* Exported macros -----------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -299,13 +255,13 @@ void ChassisModle_Set(int model)
 		switch(model)
 	{
 		case 1:
-		rccu_struct.mode_order = CHASSIS_RELAX;//²»½ÃÕı
+		rccu_struct.mode_order = CHASSIS_RELAX;//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 		break;
 		case 2:
-		rccu_struct.mode_order = CHASSIS_COORD;//x¡¢y¡¢yawÖá×Ô½ÃÕı
+		rccu_struct.mode_order = CHASSIS_COORD;//xé”Ÿæ–¤æ‹·yé”Ÿæ–¤æ‹·yawé”Ÿæ–¤æ‹·é”Ÿçš†æ–¤æ‹·é”Ÿæ–¤æ‹·
 		break;
 		case 3:
-		rccu_struct.mode_order = CHASSIS_NORMAL;//yawÖá×Ô½ÃÕı
+		rccu_struct.mode_order = CHASSIS_NORMAL;//yawé”Ÿæ–¤æ‹·é”Ÿçš†æ–¤æ‹·é”Ÿæ–¤æ‹·
 		break;
 	}
 }
@@ -316,8 +272,7 @@ void ChassisCoord_Set(float _x_diff, float _y_diff, float _yaw_diff)
 		rccu_struct.mode_order = CHASSIS_COORD;
 		My_mDelay(100);
 	}
-	#ifdef EncodingWheel//X Y¾ø¶ÔÎ»ÖÃ×ø±ê	,ZÏà¶ÔÎ»ÖÃ×ø±ê
-			rccu_struct.ChassisCoord_CtrlStruct.goal_y = _y_diff;
+	#ifdef EncodingWheel//X Yé”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·ä½é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·	,Zé”Ÿæ–¤æ‹·é”Ÿè½¿ä¼™æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?			rccu_struct.ChassisCoord_CtrlStruct.goal_y = _y_diff;
 			rccu_struct.ChassisCoord_CtrlStruct.goal_x = _x_diff;
 			rccu_struct.ChassisCoord_CtrlStruct.goal_yaw += _yaw_diff;
   #else
@@ -388,7 +343,7 @@ float Read_Position_yaw(void)
 	#elif defined(EncodingWheel)
 			return zangle;
 	#else
-			return 0.0f;//ÒÔÉÏ¶¼Ã»ÓĞ¾Í·µ»Ø
+			return 0.0f;//é”Ÿæ–¤æ‹·é”Ÿè¾ƒè®¹æ‹·æ²¡é”Ÿå«å°±å‡¤æ‹·é”Ÿæ–¤æ‹·
 	#endif
 }
 void rccu_setmode_to_tracking( void )
@@ -405,61 +360,58 @@ int32_t Read_Position_y_mm(void)
 }
 void rccu_task(void *pvParameters)
 {
-	//ÑÓÊ±µÈ´ı³µ×ÓÎÈ¶¨
+	//é”Ÿæ–¤æ‹·æ—¶é”Ÿé¥ºè¾¾æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿé¥ºè®¹æ‹·
 	My_mDelay(1000);
-	//¶ÁÈ¡µ±Ç°²ÎÊı
+	//é”Ÿæ–¤æ‹·å–é”Ÿæ–¤æ‹·å‰é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
 	rccu_struct.Gyro_YawAngle_zero = Read_RealYawAngle(&rccu_struct);
 	rccu_struct.Gyro_YawAngle_Calc = Read_GyroYawAngleCalc(&rccu_struct);
+			/* ------ debug: print encoding wheel data every 1s ------ */
 	rccu_struct.Gyro_YawAngle_Chassis = rccu_struct.Gyro_YawAngle_Calc;
 	rccu_struct.Gyro_YawAngle_Coord = rccu_struct.Gyro_YawAngle_Calc;
 	
-	rccu_setmode( &rccu_struct, CHASSIS_RELAX );//³õÊ¼Ä£Ê½
+	rccu_setmode( &rccu_struct, CHASSIS_RELAX );//é”Ÿæ–¤æ‹·å§‹æ¨¡å¼
 	Task_User_create();
 	while(1)
 	{
-		/************************ Êı¾İ²É¼¯ ************************************/
-		/************************ Êı¾İ²É¼¯ ************************************/
-		rccu_struct.Gyro_YawAngle_Calc = Read_GyroYawAngleCalc(&rccu_struct);
-		/************************ ÔË¶¯¿ØÖÆ ************************************/
-		/************************ ÔË¶¯¿ØÖÆ ************************************/
+		/************************ é”Ÿå‰¿è®¹æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹· ************************************/
+		/************************ é”Ÿå‰¿è®¹æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹· ************************************/
 		switch ( rccu_struct.mode_run )
 		{
 			case CHASSIS_RELAX:
 			case CHASSIS_STOP:
-			{//Í£Ö¹
+			{//åœæ­¢
 				rccu_struct.chassis_struct.vx = 0;
 				rccu_struct.chassis_struct.vy = 0;
 				rccu_struct.chassis_struct.vw = 0;
 			}break;
 			case CHASSIS_NORMAL:
-			{//³£¹æÄ£Ê½
+			{//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ¨¡å¼
 				rccu_chassisctrl_normalmode(&rccu_struct);
 			}break;
 			case CHASSIS_COORD:
-			{//×ø±êÄ£Ê½
+			{//é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ¨¡å¼
 				rccu_chassisctrl_coordmode(&rccu_struct);
 			}break;
 			case CHASSIS_TRACKING:
-			{//Ñ­¼£Ä£Ê½
+			{//å¾ªé”Ÿæ–¤æ‹·æ¨¡å¼
 				rccu_chassisctrl_trackingmode(&rccu_struct);
 			}break;
 			default:
 				break;
 		}
 		rccu_chassisctrl( &rccu_struct );
-		/************************ Ä£Ê½±ä¸ü ************************************/
-		/************************ Ä£Ê½±ä¸ü ************************************/
+		/************************ æ¨¡å¼é”Ÿæ–¤æ‹·é”Ÿ?************************************/
+		/************************ æ¨¡å¼é”Ÿæ–¤æ‹·é”Ÿ?************************************/
 		if(rccu_struct.mode_run != rccu_struct.mode_order)
-	    {//±ä¸ü
-			rccu_struct.mode_run = rccu_struct.mode_order;
+	    {//é”Ÿæ–¤æ‹·é”Ÿ?			rccu_struct.mode_run = rccu_struct.mode_order;
 			switch (rccu_struct.mode_run)
 			{
 				case CHASSIS_RELAX:
 				case CHASSIS_STOP:
-				case CHASSIS_NORMAL:  //Ò£¿Ø
+				case CHASSIS_NORMAL:  //é¥é”Ÿæ–¤æ‹·
 					rccu_struct.Gyro_YawAngle_Chassis = rccu_struct.Gyro_YawAngle_Calc;
 					break;
-				case CHASSIS_COORD:   //×ø±êÄ£Ê½
+				case CHASSIS_COORD:   //é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ¨¡å¼
 						rccu_struct.ChassisCoord_CtrlStruct.soft_yaw = rccu_struct.Gyro_YawAngle_Calc;
 				    rccu_struct.ChassisCoord_CtrlStruct.goal_yaw = rccu_struct.ChassisCoord_CtrlStruct.soft_yaw;
 				    Location_Tracker_NewTask( &rccu_struct.ChassisCoord_CtrlStruct.Yaw_Tracker_Struct, \
@@ -480,11 +432,11 @@ void rccu_task(void *pvParameters)
 					break;
 			}
 		}
-		/************************ ÈíÄ¿±êÌáÈ¡ **********************************/
-		/************************ ÈíÄ¿±êÌáÈ¡ **********************************/
+		/************************ é”Ÿæ–¤æ‹·ç›®é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·å– **********************************/
+		/************************ é”Ÿæ–¤æ‹·ç›®é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·å– **********************************/
 		switch (rccu_struct.mode_run)
 		{
-			case CHASSIS_COORD://×ø±êÄ£Ê½
+			case CHASSIS_COORD://é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·æ¨¡å¼
 				Location_Tracker_Capture_Goal( &rccu_struct.ChassisCoord_CtrlStruct.Yaw_Tracker_Struct, \
 			                                   rccu_struct.ChassisCoord_CtrlStruct.goal_yaw );
 	            if(ABS(rccu_struct.ChassisCoord_CtrlStruct.soft_yaw-rccu_struct.ChassisCoord_CtrlStruct.goal_yaw) < 1.0f)
@@ -514,12 +466,12 @@ int Task_RCCU_create(void)
 {
 	rccu_init( &rccu_struct );
 	
-    thread_rccu = rt_thread_create("rccu",            /* Ïß³ÌÃû×Ö */
-								   rccu_task,         /* Ïß³ÌÈë¿Úº¯Êı */
-								   RT_NULL,           /* Ïß³ÌÈë¿Úº¯Êı²ÎÊı */
-								   1024,              /* Ïß³ÌÕ»´óĞ¡ */
-								   2,                 /* Ïß³ÌµÄÓÅÏÈ¼¶ */
-								   20);               /* Ïß³ÌÊ±¼äÆ¬ */
+    thread_rccu = rt_thread_create("rccu",            /* é”Ÿç«­ç­¹æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹· */
+								   rccu_task,         /* é”Ÿç«­ç­¹æ‹·é”Ÿæ–¤æ‹·è¯¤é”Ÿæ–¤æ‹·é”Ÿ?*/
+								   RT_NULL,           /* é”Ÿç«­ç­¹æ‹·é”Ÿæ–¤æ‹·è¯¤é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿ?*/
+								   1024,              /* é”Ÿç«­ç­¹æ‹·æ ˆé”Ÿæ–¤æ‹·å° */
+								   2,                 /* é”Ÿç«­ç¨‹ç¢‰æ‹·é”Ÿæ–¤æ‹·é”Ÿé¥ºç¡·æ‹· */
+								   20);               /* é”Ÿç«­ç­¹æ‹·æ—¶é”Ÿæ–¤æ‹·ç‰‡ */
 	if(thread_rccu != RT_NULL)
 	{
 		rt_thread_startup(thread_rccu);

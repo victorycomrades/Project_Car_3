@@ -7,12 +7,14 @@
 #include "separate_button.h"
 #include "thread_rccu.h"
 #include "lcd.h"
+#include "thread_sensor.h"
 #include <stdio.h>
+#include <finsh.h>
 /* Private macros ------------------------------------------------------------*/
 #define MOTOR_NUM_MAX          4
 #define TRACKINGSENSOR_NUM_MAX 4
   
-#define WINDOW_NUM             8 //Òº¾§ÆÁÏÔÊ¾Ò³Êı
+#define WINDOW_NUM             8 //æ¶²æ™¶å±æ˜¾ç¤ºé¡µæ•°
 /* Private types -------------------------------------------------------------*/
 typedef enum
 {
@@ -21,41 +23,42 @@ typedef enum
 }_e_DisplayOperate;
 /* Private constants ---------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* ¶¨ÒåÏß³Ì¿ØÖÆ¿éÖ¸Õë */
+/* å®šä¹‰çº¿ç¨‹æ§åˆ¶å—æŒ‡é’ˆ */
 rt_thread_t thread_gui = RT_NULL;
 rt_thread_t thread_bus = RT_NULL;
-/*******¶ÀÁ¢°´¼üÊı¾İÉùÃ÷*******/
+/*******ç‹¬ç«‹æŒ‰é”®æ•°æ®å£°æ˜*******/
 KEY_T key1_struct;
 KEY_T key2_struct;
 KEY_T key3_struct;
 KEY_T key4_struct;
 KEY_T key5_struct;
-uint8_t Debug_flag = 1; //×ø±êÏµÏÔÊ¾
-/*******Ö±Á÷µç»úÇı¶¯Ä£¿éÊı¾İÉùÃ÷*******/
+uint8_t Debug_flag = 1; //åæ ‡ç³»æ˜¾ç¤º
+/*******ç›´æµç”µæœºé©±åŠ¨æ¨¡å—æ•°æ®å£°æ˜*******/
 int16_t SpeedValue[MOTOR_NUM_MAX] = {0,0,0,0};
 int16_t SpeedValuebuff[MOTOR_NUM_MAX] = {0xffff,0xffff,0xffff,0xffff};
 int16_t ReadSpeedValue[MOTOR_NUM_MAX] = {0,0,0,0};
 int16_t ReadSpeedValuebuff[MOTOR_NUM_MAX] = {0xffff,0xffff,0xffff,0xffff};
-/*******Ñ²ÏßÌõÄ£¿éÊı¾İÉùÃ÷*******/
+/*******å·¡çº¿æ¡æ¨¡å—æ•°æ®å£°æ˜*******/
 uint8_t TrackingState[TRACKINGSENSOR_NUM_MAX] = {TRACKING_MODE_WORK,TRACKING_MODE_WORK,TRACKING_MODE_WORK,TRACKING_MODE_WORK};
 uint8_t TrackingValue[TRACKINGSENSOR_NUM_MAX] = {0,0,0,0};
 uint8_t TrackingValuebuff[TRACKINGSENSOR_NUM_MAX] = {0xff,0xff,0xff,0xff};
-/*******³¬Éù²¨Ä£¿éÊı¾İÉùÃ÷*******/
+/*******è¶…å£°æ³¢æ¨¡å—æ•°æ®å£°æ˜*******/
 uint16_t UltrasonicRangingValuebuff[4] = {0xffff,0xffff,0xffff,0xffff};;
-/*******MPU6050Êı¾İÉùÃ÷*******/
-uint16_t stcAngleBuff[3] = {0xffff,0xffff,0xffff};//½Ç¶È
-/*******¶æ»úÊı¾İÉùÃ÷*******/
+/*******MPU6050æ•°æ®å£°æ˜*******/
+uint16_t stcAngleBuff[3] = {0xffff,0xffff,0xffff};//è§’åº¦
+/*******èˆµæœºæ•°æ®å£°æ˜*******/
 int16_t BUS_Position[6] = {0xffff,0xffff,0xffff,0xffff,0xffff,0xffff};
 //lcd
 uint8_t lcd_page = 0;
 uint8_t lcd_line = 0;
 uint8_t lcd_linebuff = 0xff;
+static uint8_t _lcd_show_timeout = 0;
 uint8_t window_flg = 0;
 VoidFuncVoid LCD_Display_Hand = 0;
-/*******Ê±¼äÊı¾İÉùÃ÷*******/
+/*******æ—¶é—´æ•°æ®å£°æ˜*******/
 uint32_t Time_Cnt = 0;
 uint32_t Time_buff = 0;
-/*******Òº¾§º¯ÊıÔ¤¶¨Òå*******/
+/*******æ¶²æ™¶å‡½æ•°é¢„å®šä¹‰*******/
 static void Display_Window_Clear(void);
 static void Display_Window_StartPage(void);
 static void Display_Window_DCBrushMotor(void);
@@ -64,7 +67,7 @@ static void Display_Window_TrackingSensorBool(void);
 static void Display_Window_UltrasonicSensor(void);
 static void Display_Window_JY62_MPU6050Sensor(void);
 static void Display_Window_BUS_ServoSensor(void);
-/*******Òº¾§ÏÔÊ¾±äÁ¿*******/
+/*******æ¶²æ™¶æ˜¾ç¤ºå˜é‡*******/
 const VoidFuncVoid DisplayWindow[WINDOW_NUM]=
 {
 	Display_Window_Clear,
@@ -97,7 +100,7 @@ static void Display_Tick(uint8_t Tick)
 {
 	Time_Cnt += Tick; 
 }
-static void Display_123(uint16_t (*qdata)[3])//ÏÔÊ¾¶şÎ¬Âë
+static void Display_123(uint16_t (*qdata)[3])//æ˜¾ç¤ºäºŒç»´ç 
 {
 	
 
@@ -117,7 +120,7 @@ static void Display_123(uint16_t (*qdata)[3])//ÏÔÊ¾¶şÎ¬Âë
 	}
 	lcd_show_string(100, 90, 64, "+");
 }
-/*******µç»ú¿ØÖÆ*******/
+/*******ç”µæœºæ§åˆ¶*******/
 static void DCMotor_Ctrl_Scan(void)
 {
 	if(LCD_Display_Hand == Display_Window_DCBrushMotor)
@@ -132,7 +135,7 @@ static void DCMotor_Ctrl_Scan(void)
 	ReadSpeedValue[2] = SLAVE_DCMotorMiniwatt_SpeedRead(&DCMotorMiniwatt3_S);
 	ReadSpeedValue[3] = SLAVE_DCMotorMiniwatt_SpeedRead(&DCMotorMiniwatt4_S);
 }
-/*******Ñ­¼£´«¸ĞÆ÷¶ÁÈ¡*******/
+/*******å¾ªè¿¹ä¼ æ„Ÿå™¨è¯»å–*******/
 static void TrackingSensor_Ctrl_Scan(void)
 { 
 	TrackingValue[0] = SLAVE_Tracking_BoolRead(&Tracking_Device1);
@@ -144,7 +147,7 @@ static void TrackingSensor_Ctrl_Scan(void)
 	TrackingState[2] = SLAVE_Tracking_ModeRead(&Tracking_Device3);
 	TrackingState[3] = SLAVE_Tracking_ModeRead(&Tracking_Device4);
 }
-/*******×ÜÏß¶æ»ú²½Êı¶ÁÈ¡*******/
+/*******æ€»çº¿èˆµæœºæ­¥æ•°è¯»å–*******/
 void BUSPosition_Ctrl_Scan(void)
 { 
 	BUS_Position[0] = SLAVE_SteeringEngine3CH_BUSMotorDATAControl(&Servo_S,0,0);
@@ -158,16 +161,16 @@ static void Display_Window_Clear(void)
 {
 	if(0 == window_flg)
 	{
-		lcd_clear(BLUE);//ÇåÆÁ
-		lcd_line = 0;//ĞĞµ½³õÊ¼Öµ
+		lcd_clear(BLUE);//æ¸…å±
+		lcd_line = 0;//è¡Œåˆ°åˆå§‹å€¼
 		lcd_linebuff = 0xff; 
 		if(lcd_page == 0)
-		{//Èç¹ûÊÇÇåÆÁÒ³×ª»»µ½µÚÒ»Êı¾İÒ³
+		{//å¦‚æœæ˜¯æ¸…å±é¡µè½¬æ¢åˆ°ç¬¬ä¸€æ•°æ®é¡µ
 			lcd_page = 1;
 		}		
 		LCD_Display_Hand = DisplayWindow[lcd_page];
 		if(LCD_Display_Hand == Display_Window_DCBrushMotor)
-		{//Ö±Á÷Êı¾İÏÔÊ¾»º´æÇå³ı
+		{//ç›´æµæ•°æ®æ˜¾ç¤ºç¼“å­˜æ¸…é™¤
 			SpeedValuebuff[0] = 0xffff;
 			SpeedValuebuff[1] = 0xffff;
 			SpeedValuebuff[2] = 0xffff;
@@ -188,7 +191,7 @@ static void Display_Window_Clear(void)
 			stcAngleBuff[2] = 0xffff;
 		}
 		else if(LCD_Display_Hand == Display_Window_TrackingSensorBool)
-		{//Ñ­¼£Êı¾İÏÔÊ¾»º´æÇå³ı
+		{//å¾ªè¿¹æ•°æ®æ˜¾ç¤ºç¼“å­˜æ¸…é™¤
 			TrackingValuebuff[0] = 0x5a;
 			TrackingValuebuff[1] = 0x5a;
 			TrackingValuebuff[2] = 0x5a;
@@ -240,65 +243,86 @@ static void Display_Window_Clear(void)
 }
 static void Display_Window_StartPage(void)
 {
-	static uint16_t time_cnt = 0;
-	
-	if(lcd_linebuff != lcd_line)
-	{
-		lcd_linebuff = lcd_line;
-		time_cnt = 0;
-	}
-	time_cnt++;
-	if(time_cnt == 1)
-		lcd_show_snum(10,2,12,BrickData_Struct.x,5,0);
-	else if(time_cnt == 7)
-		lcd_show_snum(10,18,12,BrickData_Struct.y,5,0);
-	else if(time_cnt == 14)
-		lcd_show_snum(10,34,12,BrickData_Struct.yaw,5,0);
-	else if(time_cnt == 21)
-	{
-		lcd_show_snum(10,50,12,Read_Position_x_mm(),5,0);
-		lcd_show_snum(10,66,12,Read_Position_y_mm(),5,0);
-		time_cnt = 0;
-	}
-	
-//	static uint16_t time_cnt = 0;
-//	
-//	if(lcd_linebuff != lcd_line)
-//	{
-//		lcd_linebuff = lcd_line;
-//		time_cnt = 0;
-//	}
-//		time_cnt++;
-//		if(time_cnt == 30)
-//		{
-//			lcd_show_string(16, 54, 24, "Loading..");//¿ª»ú³õÊ¼ÏÔÊ¾
-//		}
-		if( bool_colorsequenceflag == 1 )
-		{
-			Debug_flag = 0;  //ÏÔÊ¾¶şÎ¬ÂëµÄÊ±ºò¹Ø±Õ×ø±êÏµÏÔÊ¾
-			bool_colorsequenceflag = 0;
-			lcd_clear(BACK_COLOR);
-			Display_123(ColorSequence);
-			time_cnt = 31;//±ÜÃâÖØ¸´ÏÔÊ¾Loading
-		}
-//		#ifdef EncodingWheel
-			if(Wheel_isReady == 1)
-			{
-				buzzerSound(H6);
-				My_mDelay(120);
-				buzzerSound(H5);
-				My_mDelay(100);
-				buzzerSound(H4);
-				My_mDelay(120);
-				buzzerSound(0);
-				Wheel_isReady = 2;
-				lcd_clear(BACK_COLOR);//ÇåÆÁ
-				lcd_show_string(12, 120,12,"Click K5 to Start");
-			}
+    static uint16_t time_cnt = 0;
+    static uint16_t _task_disp_cnt = 0;
+
+    /* task code display: persist for 200 cycles */
+    if ( _lcd_ready == 1 )
+    {
+        _lcd_ready = 0;
+        {
+            uint8_t bi = 0, ci = 0;
+            char *t = _lcd_text;
+            while (*t && bi < 2) {
+                if (*t >= '1' && *t <= '4') {
+                    if (*t == '1') ColorSequence[bi][ci] = RED;
+                    else if (*t == '2') ColorSequence[bi][ci] = GREEN;
+                    else if (*t == '3') ColorSequence[bi][ci] = BLUE;
+                    else if (*t == '4') ColorSequence[bi][ci] = RED;
+                    ci++;
+                    if (ci >= 3) { ci = 0; bi++; }
+                }
+                t++;
+            }
+        }
+        _task_disp_cnt = 200;
+    }
+
+    if ( _task_disp_cnt > 0 )
+    {
+        _task_disp_cnt--;
+        lcd_clear(BACK_COLOR);
+        Display_123(ColorSequence);
+        return;
+    }
+
+    if(lcd_linebuff != lcd_line)
+    {
+        lcd_linebuff = lcd_line;
+        time_cnt = 0;
+    }
+    time_cnt++;
+    if(time_cnt == 1)
+        lcd_show_snum(10,2,12,BrickData_Struct.x,5,0);
+    else if(time_cnt == 7)
+        lcd_show_snum(10,18,12,BrickData_Struct.y,5,0);
+    else if(time_cnt == 14)
+        lcd_show_snum(10,34,12,BrickData_Struct.yaw,5,0);
+    else if(time_cnt == 21)
+    {
+        lcd_show_snum(10,50,12,Read_Position_x_mm(),5,0);
+        lcd_show_snum(10,66,12,Read_Position_y_mm(),5,0);
+        time_cnt = 0;
+    }
+
+    if( bool_colorsequenceflag == 1 )
+    {
+        Debug_flag = 0;
+        bool_colorsequenceflag = 0;
+        lcd_clear(BACK_COLOR);
+        Display_123(ColorSequence);
+        time_cnt = 31;
+    }
+
+//	#ifdef EncodingWheel
+    if(Wheel_isReady == 1)
+    {
+        buzzerSound(H6);
+        My_mDelay(120);
+        buzzerSound(H5);
+        My_mDelay(100);
+        buzzerSound(H4);
+        My_mDelay(120);
+        buzzerSound(0);
+        Wheel_isReady = 2;
+        lcd_clear(BACK_COLOR);
+        lcd_show_string(12, 120,12,"Click K5 to Start");
+    }
+}
 			
 //			if(Wheel_isReady == 2)
 //			{
-//				if(Debug_flag == 1)//ÏÔÊ¾×ø±êÏµ
+//				if(Debug_flag == 1)//æ˜¾ç¤ºåæ ‡ç³»
 //				{
 //					char buffer_x[11];
 //					char buffer_y[11];
@@ -318,9 +342,9 @@ static void Display_Window_StartPage(void)
 //			}
 
 //		#endif
-}
+
 static void Display_Window_DCBrushMotor(void) 
-{//Ö±Á÷µç»ú²Ù×÷½çÃæ
+{//ç›´æµç”µæœºæ“ä½œç•Œé¢
 	uint8_t i;
 	
 	if(lcd_linebuff != lcd_line)
@@ -342,7 +366,7 @@ static void Display_Window_DCBrushMotor(void)
 			lcd_show_string(2+64*(i%2), 2+20*(i/2+4),12,(char*)display[4+i]);
 		}
 	}
-	/*******************Ö±Á÷µç»úÊıÖµ***********************/
+	/*******************ç›´æµç”µæœºæ•°å€¼***********************/
 	for(i=0; i<MOTOR_NUM_MAX; i++)
 	{
 		if(SpeedValuebuff[i] != SpeedValue[i])
@@ -357,7 +381,7 @@ static void Display_Window_DCBrushMotor(void)
 		}
 	}
 }
-static void Display_Window_EncoderCalibrating(void)//±àÂëÂÖĞ£×¼½çÃæ
+static void Display_Window_EncoderCalibrating(void)//ç¼–ç è½®æ ¡å‡†ç•Œé¢
 {
 	if(lcd_linebuff != lcd_line)
 	{
@@ -371,7 +395,7 @@ static void Display_Window_EncoderCalibrating(void)//±àÂëÂÖĞ£×¼½çÃæ
 	if(CalibratResults == 1)
 	{
 		CalibratResults = 0;
-		lcd_show_string(2+50,5+48, 12, "Done!");//Ğ£×¼Íê³É£¡
+		lcd_show_string(2+50,5+48, 12, "Done!");//æ ¡å‡†å®Œæˆï¼
 		buzzerSound(H4);
 		My_mDelay(120);
 		buzzerSound(H5);
@@ -381,7 +405,7 @@ static void Display_Window_EncoderCalibrating(void)//±àÂëÂÖĞ£×¼½çÃæ
 		buzzerSound(0);
 	}
 }
-/*******Ñ­¼£´«¸ĞÆ÷¶ÁÈ¡*******/
+/*******å¾ªè¿¹ä¼ æ„Ÿå™¨è¯»å–*******/
 static void Display_Window_TrackingSensorBool(void)
 {
 	uint8_t i,j;
@@ -403,7 +427,7 @@ static void Display_Window_TrackingSensorBool(void)
 			}
 		}
 	}
-	/*******************Ñ­¼£´«¸ĞÆ÷ÊıÖµ***********************/
+	/*******************å¾ªè¿¹ä¼ æ„Ÿå™¨æ•°å€¼***********************/
 	for(i=0; i<TRACKINGSENSOR_NUM_MAX; i++)
 	{
 		if((TrackingValue[i] != TrackingValuebuff[i])
@@ -422,18 +446,18 @@ static void Display_Window_TrackingSensorBool(void)
 			{
 				if(((TrackingValuebuff[i]>>j)&0x01) == 0x01)
 				{
-					LCD_ShowString_BufMode(2+16*j,16+(30*i), "¡ñ",16,0);
+					LCD_ShowString_BufMode(2+16*j,16+(30*i), "â—",16,0);
 				}
 				else
 				{
-					LCD_ShowString_BufMode(2+16*j,16+(30*i), "¡ğ",16,0);
+					LCD_ShowString_BufMode(2+16*j,16+(30*i), "â—‹",16,0);
 				}
 			}
 			lcd_set_color(BLUE, WHITE);
 		}
 	}
 }
-/*******³¬Éù²¨´«¸ĞÆ÷¶ÁÈ¡*******/
+/*******è¶…å£°æ³¢ä¼ æ„Ÿå™¨è¯»å–*******/
 static void Display_Window_UltrasonicSensor(void)
 {
 	uint8_t i;
@@ -498,7 +522,7 @@ void Display_ChangeData(_e_DisplayOperate mode)
 	int16_t  DataMin;
 	uint16_t DataStep;
 	
-	//Çø±ğÊÇÄÄÒ»¸öÏÔÊ¾½çÃæ
+	//åŒºåˆ«æ˜¯å“ªä¸€ä¸ªæ˜¾ç¤ºç•Œé¢
 	if(LCD_Display_Hand == Display_Window_DCBrushMotor)
 	{
 		if(lcd_line >= MOTOR_NUM_MAX)
@@ -546,7 +570,7 @@ void Display_ChangeData(_e_DisplayOperate mode)
 /* Exported functions --------------------------------------------------------*/
 /***********************************************************************************************
 
-                                       Ó¦ÓÃÊÂ¼ş£¨ÖĞ¶Ï£©º¯Êı
+                                       åº”ç”¨äº‹ä»¶ï¼ˆä¸­æ–­ï¼‰å‡½æ•°
 
 ************************************************************************************************/
 void Display_Data_Init(void)
@@ -557,49 +581,49 @@ void Display_Data_Init(void)
 	window_flg = 0;
 	LCD_Display_Hand = DisplayWindow[0];
 }
-void Display_Data(void)  //ÏÔÊ¾Êı¾İ
+void Display_Data(void)  //æ˜¾ç¤ºæ•°æ®
 {
 	if(LCD_Display_Hand != 0)
 	{
 		LCD_Display_Hand();
 	}
 }
-void Display_TurnPage(_e_DisplayOperate mode) //·­Ò³²Ù×÷
+void Display_TurnPage(_e_DisplayOperate mode) //ç¿»é¡µæ“ä½œ
 {
-	uint8_t err;//±ê¼ÇÎªÒ³ÊÇ·ñ·¢Éú¸Ä±ä
+	uint8_t err;//æ ‡è®°ä¸ºé¡µæ˜¯å¦å‘ç”Ÿæ”¹å˜
 
 	if((1 == window_flg)&&(lcd_linebuff == lcd_line))
 	{
 		err = 1;	
 		if((DisplayAdd == mode)&&(lcd_page < (WINDOW_NUM-1))) 
-		{//×î´óÎª£¨WINDOW_NUM-1£©Ò³
+		{//æœ€å¤§ä¸ºï¼ˆWINDOW_NUM-1ï¼‰é¡µ
 			err = 0;
 			lcd_page++;
 		}
 		else if((DisplayMinus == mode)&&(lcd_page > 1))
-		{//×îĞ¡ÎªµÚÒ»Ò³£¬0Ò³ÎªÇåÆÁÒ³£¬±ğµÄ²ÅÎªÊı¾İÒ³
+		{//æœ€å°ä¸ºç¬¬ä¸€é¡µï¼Œ0é¡µä¸ºæ¸…å±é¡µï¼Œåˆ«çš„æ‰ä¸ºæ•°æ®é¡µ
 			err = 0;
 			lcd_page--;
 		}
 		if(0 == err)
 		{
 			window_flg = 0;
-			LCD_Display_Hand = DisplayWindow[0];//¿ªÊ¼ÇåÆÁ×¼±¸»»Ò³
+			LCD_Display_Hand = DisplayWindow[0];//å¼€å§‹æ¸…å±å‡†å¤‡æ¢é¡µ
 		}
 	}
 }
-void Display_NewLine(_e_DisplayOperate mode) //»»ĞĞ²Ù×÷
+void Display_NewLine(_e_DisplayOperate mode) //æ¢è¡Œæ“ä½œ
 {
 	uint8_t nummax;
 	
-	//Çø±ğÊÇÄÄÒ»¸öÏÔÊ¾½çÃæ
+	//åŒºåˆ«æ˜¯å“ªä¸€ä¸ªæ˜¾ç¤ºç•Œé¢
 	if(LCD_Display_Hand == Display_Window_TrackingSensorBool)
 	{
-		nummax = TRACKINGSENSOR_NUM_MAX-1;//4¸ö£¬±àºÅ0~3
+		nummax = TRACKINGSENSOR_NUM_MAX-1;//4ä¸ªï¼Œç¼–å·0~3
 	}
 	else if(LCD_Display_Hand == Display_Window_DCBrushMotor)
 	{
-		nummax = MOTOR_NUM_MAX-1;//4¸ö£¬±àºÅ0~3
+		nummax = MOTOR_NUM_MAX-1;//4ä¸ªï¼Œç¼–å·0~3
 	}
 	if( ( LCD_Display_Hand == Display_Window_DCBrushMotor ) || \
 		( LCD_Display_Hand == Display_Window_TrackingSensorBool ) )
@@ -635,7 +659,7 @@ void Display_ENTER(void)
 		}
 	}
 }
-/** @brief  °´¼üÊÂ¼ş
+/** @brief  æŒ‰é”®äº‹ä»¶
   * @param  None
   * @retval None
   */
@@ -711,16 +735,17 @@ static void XferExternalKey5_Handler(void* btn)
 
 /***********************************************************************************************
 
-                                       Ó¦ÓÃÈÎÎñº¯Êı
+                                       åº”ç”¨ä»»åŠ¡å‡½æ•°
 
 ************************************************************************************************/
 void gui_task(void *pvParameters)
 {
 	int i;
+		static uint8_t _lcd_show_timeout = 0;
 	Display_Data_Init();
 	while(1)
 	{
-//		rainbowCycle(1);
+		
 		for(i = 0; i<HC_SR04_NUM; i++)
 		{
 			HCSR04_DistanceCalc(&sHCSR04Data[i],&UltrasonicRangingValuebuff[i]);
@@ -736,12 +761,16 @@ void gui_task(void *pvParameters)
 }
 /***********************************************************************************************
 
-                                       Ó¦ÓÃÖ÷º¯Êı
+                                       åº”ç”¨ä¸»å‡½æ•°
 
 ************************************************************************************************/
+
+/* ------ manual test: display QR task code on LCD ------ */
+
+
 int Task_GUI_create(void)
 {
-	/**********************°´¼ü³õÊ¼»¯**************************/  
+	/**********************æŒ‰é”®åˆå§‹åŒ–**************************/  
 	mybtn_init( &key1_struct, KEY_1, 0, 300, 1200 );
 	mybtn_init( &key2_struct, KEY_2, 0, 300, 1200 );
 	mybtn_init( &key3_struct, KEY_3, 0, 300, 1200 );
@@ -766,12 +795,12 @@ int Task_GUI_create(void)
 	mybtn_start( &key4_struct );
 	mybtn_start( &key5_struct );
 	
-	thread_gui = rt_thread_create("gui",           /* Ïß³ÌÃû×Ö */
-								 gui_task,       /* Ïß³ÌÈë¿Úº¯Êı */
-								 RT_NULL,        /* Ïß³ÌÈë¿Úº¯Êı²ÎÊı */
-								 512,            /* Ïß³ÌÕ»´óĞ¡ */
-								 RT_THREAD_PRIORITY_MAX/2,/* Ïß³ÌµÄÓÅÏÈ¼¶ */
-								 20);            /* Ïß³ÌÊ±¼äÆ¬ */
+	thread_gui = rt_thread_create("gui",           /* çº¿ç¨‹åå­— */
+								 gui_task,       /* çº¿ç¨‹å…¥å£å‡½æ•° */
+								 RT_NULL,        /* çº¿ç¨‹å…¥å£å‡½æ•°å‚æ•° */
+								 512,            /* çº¿ç¨‹æ ˆå¤§å° */
+								 RT_THREAD_PRIORITY_MAX/2,/* çº¿ç¨‹çš„ä¼˜å…ˆçº§ */
+								 20);            /* çº¿ç¨‹æ—¶é—´ç‰‡ */
 	if(thread_gui != RT_NULL)
 	{
 		rt_thread_startup(thread_gui);
