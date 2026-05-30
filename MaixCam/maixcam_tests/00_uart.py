@@ -4,7 +4,7 @@ from maix import app, time, uart
 UART_DEVICES = ("/dev/ttyGS0", "/dev/ttyS0")
 BAUDRATE = 115200
 MESSAGE = "hello from maixcam\n"
-# This test is meant to be run with the openmv_bridge.py ROS node, which will read the message and print it to the console.
+
 
 def open_uart():
     last_error = None
