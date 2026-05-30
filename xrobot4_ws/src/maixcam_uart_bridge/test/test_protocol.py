@@ -33,7 +33,7 @@ class ProtocolTest(unittest.TestCase):
         msg = parse_line("QR,123+231")
         self.assertEqual(msg.payload, "123+231")
 
-    # ---- BLOB (新格式: dx,dy,cx,cy,w,h,area) ----
+    # ---- BLOB (旧格式: dx,dy,cx,cy,w,h,area) ----
     def test_parse_blob(self):
         msg = parse_line("BLOB,RED,-6,-18,154,102,38,41,1558")
         self.assertEqual(msg.kind, "BLOB")
@@ -43,6 +43,16 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(msg.fields["cx"], 154)
         self.assertEqual(msg.fields["cy"], 102)
         self.assertEqual(msg.fields["area"], 1558)
+
+    # ---- BLOB (新格式: dx,dy,cx,cy,w,h,area,worksite,height_mm) ----
+    def test_parse_blob_with_worksite_height(self):
+        msg = parse_line("BLOB,GREEN,4,-9,164,111,40,42,1680,PROCESS,70")
+        self.assertEqual(msg.kind, "BLOB")
+        self.assertEqual(msg.color, "GREEN")
+        self.assertEqual(msg.fields["cx"], 164)
+        self.assertEqual(msg.fields["cy"], 111)
+        self.assertEqual(msg.fields["worksite"], "PROCESS")
+        self.assertEqual(msg.fields["height_mm"], 70)
 
     # ---- RING (新格式: dx,dy,cx,cy,radius,score,density,ratio,source) ----
     def test_parse_ring(self):
@@ -54,19 +64,19 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(msg.fields["radius"], 52)
         self.assertEqual(msg.fields["source"], "MULTI_HOUGH3")
 
-    # ---- LINE ----
-    def test_parse_line(self):
-        msg = parse_line("LINE,-12,87")
-        self.assertEqual(msg.kind, "LINE")
-        self.assertEqual(msg.fields["dx"], -12)
-        self.assertEqual(msg.fields["theta"], 87)
-
     # ---- NONE ----
     def test_parse_none(self):
         msg = parse_line("NONE,BLOB,GREEN")
         self.assertEqual(msg.kind, "NONE")
         self.assertEqual(msg.target, "BLOB")
         self.assertEqual(msg.color, "GREEN")
+
+    def test_parse_none_blob_worksite(self):
+        msg = parse_line("NONE,BLOB,RAW,RED")
+        self.assertEqual(msg.kind, "NONE")
+        self.assertEqual(msg.target, "BLOB")
+        self.assertEqual(msg.fields["worksite"], "RAW")
+        self.assertEqual(msg.color, "RED")
 
     # ---- 状态消息 ----
     def test_parse_hello(self):

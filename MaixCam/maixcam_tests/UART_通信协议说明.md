@@ -37,15 +37,15 @@ MaixCam 端使用 UART1：设备节点 `/dev/ttyS1`（引脚 A18/A19），启动
 | 指令 | 功能 |
 |------|------|
 | `MODE,QR` | 二维码识别 |
-| `MODE,BLOB,RED` | 只找 **红色** 物料 |
-| `MODE,BLOB,GREEN` | 只找 **绿色** 物料 |
-| `MODE,BLOB,BLUE` | 只找 **蓝色** 物料 |
-| `MODE,BLOB,ALL` | 同时找红绿蓝三种物料 |
+| `MODE,BLOB,RAW,RED` | 原料区只找 **红色** 物料，高度 160mm |
+| `MODE,BLOB,PROCESS,GREEN` | 粗加工区只找 **绿色** 物料，高度 70mm |
+| `MODE,BLOB,STORAGE1,BLUE` | 暂存区一层只找 **蓝色** 物料，高度 70mm |
+| `MODE,BLOB,RAW,ALL` | 原料区同时找红绿蓝三种物料 |
+| `MODE,BLOB,RED` | 兼容旧格式，等价于 `MODE,BLOB,RAW,RED` |
 | `MODE,RING,RED` | 只找 **红色** 色环（放置区定位） |
 | `MODE,RING,GREEN` | 只找 **绿色** 色环 |
 | `MODE,RING,BLUE` | 只找 **蓝色** 色环 |
 | `MODE,RING,ALL` | 同时找红绿蓝三种色环 |
-| `MODE,LINE` | 巡线模式（车道线检测） |
 | `MODE,IDLE` | 空闲模式，不收发识别数据 |
 
 ### 3.2 心跳检测
@@ -80,7 +80,7 @@ NONE,QR
 ### 4.2 物料色块
 
 ```
-BLOB,color,dx,dy,cx,cy,w,h,area
+BLOB,color,dx,dy,cx,cy,w,h,area,worksite,height_mm
 ```
 
 | 字段 | 说明 |
@@ -93,10 +93,12 @@ BLOB,color,dx,dy,cx,cy,w,h,area
 | w | 包围框宽度 (px) |
 | h | 包围框高度 (px) |
 | area | 包围框面积 `= w × h` |
+| worksite | 工位：`RAW` / `PROCESS` / `STORAGE1` |
+| height_mm | 当前工位下目标中心所在高度，单位 mm |
 
 未识别到时：
 ```
-NONE,BLOB,RED
+NONE,BLOB,RAW,RED
 ```
 
 ### 4.3 色环（放置区定位）
@@ -123,23 +125,7 @@ RING,color,dx,dy,cx,cy,radius,score,density,ratio,source
 NONE,RING,RED
 ```
 
-### 4.4 巡线
-
-```
-LINE,dx,theta
-```
-
-| 字段 | 说明 |
-|------|------|
-| dx | 车道线相对画面中心的横向偏差 (px) |
-| theta | 车道线角度（-90 ~ 90） |
-
-未检测到线时：
-```
-NONE,LINE
-```
-
-### 4.5 状态消息
+### 4.4 状态消息
 
 | 格式 | 说明 |
 |------|------|
@@ -159,9 +145,8 @@ NONE,LINE
 ```bash
 # 启动 bridge 节点后，用 rostopic 发送
 rostopic pub /vision/mode std_msgs/String "data: 'MODE,QR'" -1
-rostopic pub /vision/mode std_msgs/String "data: 'MODE,BLOB,RED'" -1
+rostopic pub /vision/mode std_msgs/String "data: 'MODE,BLOB,RAW,RED'" -1
 rostopic pub /vision/mode std_msgs/String "data: 'MODE,RING,RED'" -1
-rostopic pub /vision/mode std_msgs/String "data: 'MODE,LINE'" -1
 rostopic pub /vision/mode std_msgs/String "data: 'MODE,IDLE'" -1
 ```
 
@@ -186,7 +171,7 @@ import serial
 ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=0.02)
 
 # 发送模式切换
-ser.write(b"MODE,BLOB,RED\n")
+ser.write(b"MODE,BLOB,RAW,RED\n")
 
 # 发心跳
 ser.write(b"PING\n")
@@ -245,8 +230,6 @@ rostopic echo /vision/blob/center
 # 查看色环中心偏差（PointStamped: x=dx, y=dy, z=radius）
 rostopic echo /vision/ring/center
 
-# 查看巡线偏差（Pose2D: x=dx, theta=theta）
-rostopic echo /vision/line
 ```
 
 ### 7.3 直接串口监听
@@ -265,7 +248,7 @@ cat /dev/ttyUSB0
 2. Jetson 发 MODE,QR → MaixCam 切到二维码识别 → 返回 INFO,MODE,QR
 3. MaixCam 持续发送 QR,123+231,dx,dy（拍到二维码后）
 4. Jetson 收到任务码 → 发 MODE,IDLE → 停止二维码识别
-5. Jetson 解析搬运顺序 → 发 MODE,BLOB,RED → 开始找红色物料
+5. Jetson 解析搬运顺序 → 发 MODE,BLOB,RAW,RED → 开始在原料区找红色物料
 6. MaixCam 持续发送 BLOB,RED,dx,dy,...
 7. Jetson 根据 dx,dy 控制机械臂对准 → 抓取 → 发 MODE,BLOB,GREEN
 8. ... 依次完成全部物料抓取、放置

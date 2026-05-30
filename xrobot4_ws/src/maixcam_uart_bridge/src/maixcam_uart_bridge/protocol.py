@@ -3,22 +3,22 @@ MaixCam UART 文本协议解析。
 
 协议格式（以换行 \\n 结尾）：
 
-  MaixCam → Jetson:
+    MaixCam -> Jetson:
     QR,payload
     BLOB,color,dx,dy,cx,cy,w,h,area
+    BLOB,color,dx,dy,cx,cy,w,h,area,worksite,height_mm
     RING,color,dx,dy,cx,cy,radius,score,density,ratio,source
-    LINE,dx,theta
     NONE,type[,color]
     HELLO,text
     INFO,text
     ERR,text
     PONG,text
 
-  Jetson → MaixCam:
+  Jetson -> MaixCam:
     MODE,QR
+    MODE,BLOB,RAW|PROCESS|STORAGE1,RED|GREEN|BLUE|ALL
     MODE,BLOB,RED|GREEN|BLUE|ALL
     MODE,RING,RED|GREEN|BLUE|ALL
-    MODE,LINE
     MODE,IDLE
     PING
 """
@@ -66,7 +66,7 @@ def parse_line(line: str) -> VisionMessage:
             fields["dy"] = _to_int(parts[3], "dy")
         return VisionMessage(kind="QR", payload=payload, fields=fields, raw=raw)
 
-    # ---- BLOB,color,dx,dy,cx,cy,w,h,area ---------------------------------
+    # ---- BLOB,color,dx,dy,cx,cy,w,h,area[,worksite,height_mm] ------------
     if kind == "BLOB":
         if len(parts) < 9:
             raise ValueError("BLOB requires color,dx,dy,cx,cy,w,h,area (9 parts)")
@@ -75,6 +75,10 @@ def parse_line(line: str) -> VisionMessage:
         fields = {}
         for name, value in zip(names, parts[2:9]):
             fields[name] = _to_int(value, name)
+        if len(parts) >= 10 and parts[9]:
+            fields["worksite"] = parts[9].upper()
+        if len(parts) >= 11 and parts[10]:
+            fields["height_mm"] = _to_int(parts[10], "height_mm")
         return VisionMessage(kind="BLOB", color=color, fields=fields, raw=raw)
 
     # ---- RING,color,dx,dy,cx,cy,radius,score,density,ratio,source --------
@@ -89,23 +93,19 @@ def parse_line(line: str) -> VisionMessage:
         fields["source"] = parts[10]
         return VisionMessage(kind="RING", color=color, fields=fields, raw=raw)
 
-    # ---- LINE,dx,theta ---------------------------------------------------
-    if kind == "LINE":
-        if len(parts) < 3:
-            raise ValueError("LINE requires dx,theta")
-        return VisionMessage(
-            kind="LINE",
-            fields={"dx": _to_int(parts[1], "dx"), "theta": _to_int(parts[2], "theta")},
-            raw=raw,
-        )
-
     # ---- NONE,type[,color] -----------------------------------------------
     if kind == "NONE":
         if len(parts) < 2:
             raise ValueError("NONE requires target type")
         target = parts[1].upper()
-        color = parts[2].upper() if len(parts) > 2 else None
-        return VisionMessage(kind="NONE", target=target, color=color, raw=raw)
+        fields = {}
+        color = None
+        if target == "BLOB" and len(parts) >= 4:
+            fields["worksite"] = parts[2].upper()
+            color = parts[3].upper()
+        elif len(parts) > 2:
+            color = parts[2].upper()
+        return VisionMessage(kind="NONE", target=target, color=color, fields=fields, raw=raw)
 
     # ---- HELLO / INFO / WARN / ERR / PONG --------------------------------
     if kind in ("HELLO", "INFO", "WARN", "ERR", "PONG"):

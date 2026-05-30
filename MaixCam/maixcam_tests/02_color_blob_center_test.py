@@ -41,6 +41,15 @@ COLOR_CONFIGS = [
     ("BLUE", [0, 90, -20, 80, -128, -20], image.COLOR_BLUE),
 ]
 
+# 单功能调试时手动改这里，主程序中可由 Jetson 串口命令切换。
+MATERIAL_HEIGHTS_MM = {
+    "RAW": 160,       # 原料区：转盘高度 90 + 物块高度 70
+    "PROCESS": 70,    # 粗加工区：地面 + 物块高度 70
+    "STORAGE1": 70,   # 暂存区一层：第一层物块高度 70
+}
+WORKSITE = "RAW"
+HEIGHT_MM = MATERIAL_HEIGHTS_MM[WORKSITE]
+
 PIXELS_THRESHOLD = 200
 AREA_THRESHOLD = 200
 
@@ -88,7 +97,8 @@ while not app.need_exit():
         img.draw_string(x, max(0, y - 16),
                         "%s d(%d,%d)" % (name, dx, dy), draw_color)
 
-        found.append("%s,%d,%d,%d,%d,%d,%d,%d" % (name, dx, dy, cx, cy, w, h, area))
+        found.append("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d" % (
+            name, dx, dy, cx, cy, w, h, area, WORKSITE, HEIGHT_MM))
 
     if frame_id % 10 == 0:
         if found:

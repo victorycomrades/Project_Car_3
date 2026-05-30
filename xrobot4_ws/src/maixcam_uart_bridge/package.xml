@@ -2,7 +2,7 @@
 <package format="2">
   <name>maixcam_uart_bridge</name>
   <version>0.1.0</version>
-  <description>ROS1 bridge node for MaixCam UART serial communication. Receives vision results (QR/BLOB/RING/LINE) from MaixCam via serial port, publishes as ROS topics, and forwards MODE commands back to MaixCam.</description>
+  <description>ROS1 bridge node for MaixCam UART serial communication. Receives vision results (QR/BLOB/RING) from MaixCam via serial port, publishes as ROS topics, and forwards MODE commands back to MaixCam.</description>
   <maintainer email="user@example.com">user</maintainer>
   <license>MIT</license>
 

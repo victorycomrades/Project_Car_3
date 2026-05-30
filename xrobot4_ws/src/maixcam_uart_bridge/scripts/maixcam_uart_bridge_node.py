@@ -4,7 +4,7 @@ MaixCam UART Bridge — ROS1 节点
 ================================
 
 功能：
-  - 通过串口接收 MaixCam 发来的视觉识别结果（QR/BLOB/RING/LINE）
+  - 通过串口接收 MaixCam 发来的视觉识别结果（QR/BLOB/RING）
   - 解析文本协议并发布到 ROS topic
   - 订阅 /vision/mode 话题，将模式指令转发给 MaixCam
   - 自动重连
@@ -21,10 +21,9 @@ ROS topic 说明：
   /vision/qrcode        二维码内容
   /vision/blob/raw      色块原始结果
   /vision/blob/center   色块中心偏差 (x=dx, y=dy, z=area)
+  /vision/blob/pixel    色块像素中心 (x=cx, y=cy, z=height_mm)
   /vision/ring/raw      色环原始结果
   /vision/ring/center   色环中心偏差 (x=dx, y=dy, z=radius)
-  /vision/line/raw      巡线原始结果
-  /vision/line          巡线偏差 (x=dx, theta=theta)
   /vision/none          未识别到目标
 """
 
@@ -39,7 +38,7 @@ import serial
 import serial.tools.list_ports
 
 import rospy
-from geometry_msgs.msg import PointStamped, Pose2D
+from geometry_msgs.msg import PointStamped
 from std_msgs.msg import String
 
 # 将 src/ 加入路径以导入 protocol
@@ -72,11 +71,11 @@ class MaixCamUartBridgeNode:
         self.pub_blob_raw = rospy.Publisher(self.topic_prefix + "/blob/raw", String, queue_size=10)
         self.pub_blob_center = rospy.Publisher(self.topic_prefix + "/blob/center",
                                                PointStamped, queue_size=10)
+        self.pub_blob_pixel = rospy.Publisher(self.topic_prefix + "/blob/pixel",
+                                              PointStamped, queue_size=10)
         self.pub_ring_raw = rospy.Publisher(self.topic_prefix + "/ring/raw", String, queue_size=10)
         self.pub_ring_center = rospy.Publisher(self.topic_prefix + "/ring/center",
                                                PointStamped, queue_size=10)
-        self.pub_line_raw = rospy.Publisher(self.topic_prefix + "/line/raw", String, queue_size=10)
-        self.pub_line = rospy.Publisher(self.topic_prefix + "/line", Pose2D, queue_size=10)
         self.pub_none = rospy.Publisher(self.topic_prefix + "/none", String, queue_size=10)
 
         # Subscriber — 接收模式切换指令
@@ -148,18 +147,10 @@ class MaixCamUartBridgeNode:
         elif msg.kind == "BLOB":
             self.pub_blob_raw.publish(String(data=msg.raw))
             self._publish_point(self.pub_blob_center, msg, "area")
-
+            self._publish_pixel_point(self.pub_blob_pixel, msg)
         elif msg.kind == "RING":
             self.pub_ring_raw.publish(String(data=msg.raw))
             self._publish_point(self.pub_ring_center, msg, "radius")
-
-        elif msg.kind == "LINE":
-            pose = Pose2D()
-            pose.x = float(msg.fields.get("dx", 0))
-            pose.y = 0.0
-            pose.theta = float(msg.fields.get("theta", 0))
-            self.pub_line_raw.publish(String(data=msg.raw))
-            self.pub_line.publish(pose)
 
         elif msg.kind == "NONE":
             self.pub_none.publish(String(data=msg.raw))
@@ -175,6 +166,16 @@ class MaixCamUartBridgeNode:
         point.point.x = float(msg.fields.get("dx", 0))
         point.point.y = float(msg.fields.get("dy", 0))
         point.point.z = float(msg.fields.get(z_field, 0)) if z_field else 0.0
+        publisher.publish(point)
+
+    def _publish_pixel_point(self, publisher, msg):
+        """发物料像素中心，x=cx, y=cy, z=目标高度(mm)。"""
+        point = PointStamped()
+        point.header.stamp = rospy.Time.now()
+        point.header.frame_id = self.frame_id
+        point.point.x = float(msg.fields.get("cx", 0))
+        point.point.y = float(msg.fields.get("cy", 0))
+        point.point.z = float(msg.fields.get("height_mm", 0))
         publisher.publish(point)
 
     # ---- 连接管理 ----------------------------------------------------------

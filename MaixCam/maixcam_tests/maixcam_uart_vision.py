@@ -5,8 +5,8 @@ MaixCam UART 双向通信视觉服务 — 主生产脚本
 功能：
 - 通过 UART 串口与 Jetson Nano 双向通信
 - 接收 Jetson 下发的 MODE 指令切换视觉模式
-- 发送结构化视觉识别结果（QR/BLOB/RING/LINE）
-- 所有坐标输出 (dx, dy) 为相对于相机画面中心的偏差，供机械臂使用
+- 发送结构化视觉识别结果（QR/BLOB/RING）
+- 物料识别会同时输出图像中心点 (cx, cy) 和当前工位高度
 - 在 MaixCam 屏幕上显示调试画面
 
 硬件接线（MaixCam UART1）：
@@ -17,17 +17,16 @@ MaixCam UART 双向通信视觉服务 — 主生产脚本
 
 协议格式（MaixCam → Jetson）：
   QR,payload
-  BLOB,color,dx,dy,cx,cy,w,h,area
+  BLOB,color,dx,dy,cx,cy,w,h,area,worksite,height_mm
   RING,color,dx,dy,cx,cy,radius,score,density,ratio,source
-  LINE,dx,theta
   NONE,type[,color]
   INFO,text
 
 协议格式（Jetson → MaixCam）：
   MODE,QR
-  MODE,BLOB,RED|GREEN|BLUE|ALL
+  MODE,BLOB,RAW|PROCESS|STORAGE1,RED|GREEN|BLUE|ALL
+  MODE,BLOB,RED|GREEN|BLUE|ALL        # 兼容旧格式，默认 RAW 工位
   MODE,RING,RED|GREEN|BLUE|ALL
-  MODE,LINE
   MODE,IDLE
   PING
 """
@@ -46,6 +45,17 @@ UART_BAUD = 115200
 
 # 默认视觉模式（Jetson 可通过 MODE 命令覆盖）
 MODE = "QR"
+
+# 物料所在工位高度配置，单位 mm。
+# RAW: 原料区 = 转盘高度 90 + 物块高度 70
+# PROCESS: 粗加工区 = 地面 + 物块高度 70
+# STORAGE1: 暂存区一层/码垛第一层 = 第一块物料高度 70
+MATERIAL_HEIGHTS_MM = {
+    "RAW": 160,
+    "PROCESS": 70,
+    "STORAGE1": 70,
+}
+DEFAULT_WORKSITE = "RAW"
 
 # ---- 颜色阈值配置（使用 MaixCam Find Blobs 工具在实际场地标定后回填）--------
 
@@ -73,10 +83,6 @@ RING_COLORS = {
 
 PIXELS_THRESHOLD = 200
 AREA_THRESHOLD = 200
-
-# 巡线阈值
-LINE_THRESHOLD = [20, 90, -15, 15, -15, 15]
-LINE_ROI = [0, HEIGHT // 2, WIDTH, HEIGHT // 2]
 
 # 色环检测参数
 RING_PIXELS_THRESHOLD = 50
@@ -184,8 +190,15 @@ def normalize_mode(parts):
     if len(parts) < 2:
         return "IDLE"
     if parts[1] == "BLOB":
-        color = parts[2] if len(parts) >= 3 else "ALL"
-        return "BLOB_" + color
+        # 新格式：MODE,BLOB,RAW,RED
+        # 旧格式：MODE,BLOB,RED，兼容为 RAW 工位
+        if len(parts) >= 4 and parts[2] in MATERIAL_HEIGHTS_MM:
+            worksite = parts[2]
+            color = parts[3]
+        else:
+            worksite = DEFAULT_WORKSITE
+            color = parts[2] if len(parts) >= 3 else "ALL"
+        return "BLOB_%s_%s" % (worksite, color)
     if parts[1] == "RING":
         color = parts[2] if len(parts) >= 3 else "ALL"
         return "RING_" + color
@@ -207,26 +220,31 @@ def find_largest_blob(img, threshold, pixels_th=PIXELS_THRESHOLD, area_th=AREA_T
     return max(blobs, key=lambda b: b[2] * b[3])
 
 
-def blob_report(color_name, blob):
+def blob_report(color_name, blob, worksite):
     x, y, w, h = blob[0], blob[1], blob[2], blob[3]
     cx = x + w // 2
     cy = y + h // 2
     area = w * h
     dx = cx - WIDTH // 2
     dy = cy - HEIGHT // 2
-    return "BLOB,%s,%d,%d,%d,%d,%d,%d,%d" % (color_name, dx, dy, cx, cy, w, h, area)
+    height_mm = MATERIAL_HEIGHTS_MM.get(worksite, MATERIAL_HEIGHTS_MM[DEFAULT_WORKSITE])
+    return "BLOB,%s,%d,%d,%d,%d,%d,%d,%d,%s,%d" % (
+        color_name, dx, dy, cx, cy, w, h, area, worksite, height_mm)
 
 
-def draw_blob(img, color_name, blob, draw_color):
+def draw_blob(img, color_name, blob, draw_color, worksite):
     x, y, w, h = blob[0], blob[1], blob[2], blob[3]
     cx = x + w // 2
     cy = y + h // 2
     dx = cx - WIDTH // 2
     dy = cy - HEIGHT // 2
+    height_mm = MATERIAL_HEIGHTS_MM.get(worksite, MATERIAL_HEIGHTS_MM[DEFAULT_WORKSITE])
     img.draw_rect(x, y, w, h, draw_color, 2)
     img.draw_cross(cx, cy, draw_color, 10, 2)
     img.draw_string(x, max(0, y - 16),
                     "%s d(%d,%d)" % (color_name, dx, dy), draw_color)
+    img.draw_string(x, min(HEIGHT - 16, y + h + 2),
+                    "%s H=%dmm" % (worksite, height_mm), draw_color)
 
 
 # ---- 色环检测函数 ------------------------------------------------------------
@@ -437,7 +455,7 @@ def run_qr(img, frame_id):
         uart_write("QR,%s" % payload)
 
 
-def run_blob(img, target, frame_id):
+def run_blob(img, worksite, target, frame_id):
     colors = ("RED", "GREEN", "BLUE") if target == "ALL" else (target,)
     found = False
     for color_name in colors:
@@ -448,13 +466,13 @@ def run_blob(img, target, frame_id):
         if blob is None:
             continue
         found = True
-        draw_blob(img, color_name, blob, draw_color)
+        draw_blob(img, color_name, blob, draw_color, worksite)
         if frame_id % 5 == 0:
-            uart_write(blob_report(color_name, blob))
+            uart_write(blob_report(color_name, blob, worksite))
     if not found:
-        img.draw_string(0, 0, "BLOB %s: none" % target, image.COLOR_RED)
+        img.draw_string(0, 0, "BLOB %s %s: none" % (worksite, target), image.COLOR_RED)
         if frame_id % 20 == 0:
-            uart_write("NONE,BLOB,%s" % target)
+            uart_write("NONE,BLOB,%s,%s" % (worksite, target))
 
 
 def run_ring(img, target, frame_id):
@@ -476,32 +494,6 @@ def run_ring(img, target, frame_id):
                 uart_write(r["report"])
         else:
             uart_write("NONE,RING,%s" % target)
-
-
-def run_line(img, frame_id):
-    img.draw_rect(LINE_ROI[0], LINE_ROI[1], LINE_ROI[2], LINE_ROI[3],
-                  image.COLOR_BLUE, 1)
-    lines = img.get_regression([LINE_THRESHOLD], roi=LINE_ROI, area_threshold=100)
-    if not lines:
-        img.draw_string(0, 0, "LINE: none", image.COLOR_RED)
-        if frame_id % 20 == 0:
-            uart_write("NONE,LINE")
-        return
-
-    line = lines[0]
-    img.draw_line(line.x1(), line.y1(), line.x2(), line.y2(), image.COLOR_GREEN, 2)
-
-    theta = line.theta()
-    rho = line.rho()
-    if theta > 90:
-        theta_out = 270 - theta
-    else:
-        theta_out = 90 - theta
-    dx = rho - WIDTH // 2
-
-    img.draw_string(0, 0, "LINE dx=%d theta=%d" % (dx, theta_out), image.COLOR_GREEN)
-    if frame_id % 5 == 0:
-        uart_write("LINE,%d,%d" % (dx, theta_out))
 
 
 # ---- 主循环 ------------------------------------------------------------------
@@ -526,11 +518,13 @@ while not app.need_exit():
     if MODE == "QR":
         run_qr(img, frame_id)
     elif MODE.startswith("BLOB_"):
-        run_blob(img, MODE.split("_", 1)[1], frame_id)
+        mode_parts = MODE.split("_")
+        if len(mode_parts) >= 3:
+            run_blob(img, mode_parts[1], mode_parts[2], frame_id)
+        else:
+            run_blob(img, DEFAULT_WORKSITE, "ALL", frame_id)
     elif MODE.startswith("RING_"):
         run_ring(img, MODE.split("_", 1)[1], frame_id)
-    elif MODE == "LINE":
-        run_line(img, frame_id)
     elif MODE == "IDLE":
         if frame_id % 60 == 0:
             uart_write("INFO,IDLE")

@@ -1,0 +1,13 @@
+{
+  "samples": [
+    {
+      "image": "data/handeye/sample_001.jpg",
+      "T_base_gripper": [
+        [1, 0, 0, 120],
+        [0, 1, 0, 0],
+        [0, 0, 1, 180],
+        [0, 0, 0, 1]
+      ]
+    }
+  ]
+}
